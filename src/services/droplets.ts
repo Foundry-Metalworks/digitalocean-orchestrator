@@ -16,8 +16,7 @@ const getDropletId = async () => {
 }
 
 const getDropletStatus = async (id: string) => {
-    const url = `https://api.digitalocean.com/v2/droplets/${id}`;
-    const result = await axios.get(url, config({}));
+    const result = await axios.get(dropletUrl(id), config({}));
 
     return mapper.fromStatusResponse(result.data);
 }
@@ -100,7 +99,7 @@ const startDroplet = async () => {
 }
 
 const getDropletIP = async (id: string) => {
-    const result = await axios.get(dropletUrl(id));
+    const result = await axios.get(dropletUrl(id), config());
 
     return mapper.fromIPResponse(result.data);
 }
