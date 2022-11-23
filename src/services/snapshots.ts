@@ -23,7 +23,6 @@ const deleteSnapshot = async (id: string) => {
 
 
 const snapshotDroplet = async (dropletId: string) => {
-    console.log("starting snapshot");
     const snapshotResult = await axios.post(dropletActionUrl(dropletId), { type: "snapshot" }, config());
     const actionId = snapshotResult.data.action.id;
 
@@ -32,7 +31,6 @@ const snapshotDroplet = async (dropletId: string) => {
         await new Promise((resolve) => setTimeout(resolve, 2500));
         status = await axios.get(actionUrl(actionId), config());
     }
-    console.log("finished snapshot");
 
     return ok;
 }

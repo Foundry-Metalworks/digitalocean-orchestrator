@@ -27,8 +27,7 @@ const onStopRequest = tryCatchHelper(async () => {
 });
 
 const onStartRequest = tryCatchHelper(async () => {
-    const id = await service.getDropletId();
-    return await service.startDroplet(id.id);
+    return await service.startDroplet();
 });
 
 export default {
