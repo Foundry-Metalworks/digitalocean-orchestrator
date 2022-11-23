@@ -17,7 +17,13 @@ const tryCatchHelper = (func: Function) => {
 }
 
 const onStatusRequest = tryCatchHelper(async () => {
-    const id = await service.getDropletId();
+    let id;
+    try {
+        id = await service.getDropletId();
+    }
+    catch (e) {
+        return { status: "deleted" };
+    }
     return await service.getDropletStatus(id.id);
 });
 
