@@ -16,7 +16,28 @@ const getDropletStatus = async (id: string) => {
     return mapper.fromStatusResponse(result.data);
 }
 
+const waitForStarted = async (id: string) => {
+    const status = await getDropletStatus(id);
+
+    if (status.status != "active") {
+        await new Promise(resolve => setTimeout(resolve, 2500));
+        await waitForStarted(id);
+    }
+}
+
+const startDroplet = async (id: string) => {
+    const url = `https://api.digitalocean.com/v2/droplets/${id}/actions`;
+    await axios.post(url,  { type: "power_on" }, config());
+
+    console.log('starting droplet with id: ' + id);
+    await waitForStarted(id);
+    console.log('started droplet with id: ' + id);
+
+    return;
+}
+
 export default {
     getDropletId,
-    getDropletStatus
+    getDropletStatus,
+    startDroplet
 };

@@ -7,6 +7,7 @@ dotenv.config();
 const app = express();
 
 const router = express.Router();
+router.post('/start', dropletsController.onStartRequest);
 router.get('/status', dropletsController.onStatusRequest);
 
 app.use(cors());
