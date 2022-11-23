@@ -1,6 +1,7 @@
 import axios from 'axios';
 import mapper from './mapper/droplets';
 import snapshotService from './snapshots';
+import networkService from './network';
 import { config } from '../util/axios';
 
 const ok = "ok";
@@ -85,6 +86,12 @@ const startDroplet = async () => {
     const id = result.data.droplet.id;
     await waitForStarted(id);
     console.log(`started droplet with id: ${id}`);
+
+    console.log(`updating network mapping`)
+    const mappingId = await networkService.getDomainMapId();
+    const ip = await getDropletIP(id);
+    await networkService.updateDomain(mappingId.id, ip.ip);
+    console.log(`updated network mapping`)
 
     console.log('deleting snapshot asynchronously');
     snapshotService.deleteSnapshot(snapshotId.id);
