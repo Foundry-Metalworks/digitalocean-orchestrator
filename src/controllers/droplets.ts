@@ -21,6 +21,11 @@ const onStatusRequest = tryCatchHelper(async () => {
     return await service.getDropletStatus(id.id);
 });
 
+const onStopRequest = tryCatchHelper(async () => {
+    const id = await service.getDropletId();
+    return await service.stopDroplet(id.id);
+});
+
 const onStartRequest = tryCatchHelper(async () => {
     const id = await service.getDropletId();
     return await service.startDroplet(id.id);
@@ -28,5 +33,6 @@ const onStartRequest = tryCatchHelper(async () => {
 
 export default {
     onStatusRequest,
+    onStopRequest,
     onStartRequest
 }

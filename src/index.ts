@@ -8,6 +8,7 @@ const app = express();
 
 const router = express.Router();
 router.post('/start', dropletsController.onStartRequest);
+router.post('/stop', dropletsController.onStopRequest);
 router.get('/status', dropletsController.onStatusRequest);
 
 app.use(cors());
