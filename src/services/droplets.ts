@@ -9,6 +9,14 @@ const getDropletId = async () => {
     return mapper.fromIdResponse(result.data);
 }
 
+const getDropletStatus = async (id: string) => {
+    const url = `https://api.digitalocean.com/v2/droplets/${id}`;
+    const result = await axios.get(url, config({}));
+
+    return mapper.fromStatusResponse(result.data);
+}
+
 export default {
-    getDropletId
+    getDropletId,
+    getDropletStatus
 };
