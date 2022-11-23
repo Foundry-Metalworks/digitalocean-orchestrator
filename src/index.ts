@@ -5,6 +5,7 @@ import dropletsController from './controllers/droplets';
 dotenv.config();
 
 const app = express();
+const PORT = process.env.PORT || 3030;
 
 const router = express.Router();
 router.post('/start', dropletsController.onStartRequest);
@@ -14,9 +15,9 @@ router.get('/status', dropletsController.onStatusRequest);
 app.use(cors());
 app.disable("etag");
 app.use("/api", router);
-app.listen(3100, () => {
+app.listen(PORT, () => {
   console.log(
-      `[server]: digitalocean-orchestrator is running at http://localhost:${3100}`
+      `[server]: digitalocean-orchestrator is running at http://localhost:${PORT}`
   );
 });
 

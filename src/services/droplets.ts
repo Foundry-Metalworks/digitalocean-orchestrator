@@ -44,7 +44,9 @@ const waitForStopped = async (id: string) => {
 };
 
 const snapshotAndDelete = async (dropletId: string) => {
+    console.log('snapshotting droplet');
     await snapshotService.snapshotDroplet(dropletId);
+    console.log('deleting droplet');
     await axios.delete(dropletUrl(dropletId), config());
 }
 
@@ -54,7 +56,6 @@ const stopDroplet = async (id: string) => {
     await waitForStopped(id);
     console.log(`stopped droplet with id: ${id}`);
 
-    console.log('snapshotting droplet asynchronously');
     snapshotAndDelete(id);
 
     return ok;
