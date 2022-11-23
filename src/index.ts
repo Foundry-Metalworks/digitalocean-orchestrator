@@ -11,6 +11,7 @@ const router = express.Router();
 router.post('/start', dropletsController.onStartRequest);
 router.post('/stop', dropletsController.onStopRequest);
 router.get('/status', dropletsController.onStatusRequest);
+router.get('/ip', dropletsController.onIPRequest);
 
 app.use(cors());
 app.disable("etag");

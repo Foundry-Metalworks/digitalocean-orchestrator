@@ -30,8 +30,14 @@ const onStartRequest = tryCatchHelper(async () => {
     return await service.startDroplet();
 });
 
+const onIPRequest = tryCatchHelper(async () => {
+    const id = await service.getDropletId();
+    return await service.getDropletIP(id.id);
+})
+
 export default {
     onStatusRequest,
     onStopRequest,
-    onStartRequest
+    onStartRequest,
+    onIPRequest
 }

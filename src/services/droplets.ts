@@ -32,7 +32,7 @@ const waitForStopped = async (id: string) => {
     let count = 0;
     let status = await getDropletStatus(id);
     while (status.status != "off") {
-        if (count++ == 25) {
+        if (count++ == 48) {
             console.log('waited too long, killing...');
             await killDroplet(id);
         }
@@ -92,10 +92,17 @@ const startDroplet = async () => {
     return ok;
 }
 
+const getDropletIP = async (id: string) => {
+    const result = await axios.get(dropletUrl(id));
+
+    return mapper.fromIPResponse(result.data);
+}
+
 export default {
     getDropletId,
     getDropletStatus,
     killDroplet,
     stopDroplet,
-    startDroplet
+    startDroplet,
+    getDropletIP
 };
