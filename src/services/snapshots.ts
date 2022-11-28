@@ -22,12 +22,13 @@ const deleteSnapshot = async (id: string) => {
 }
 
 
-const snapshotDroplet = async (dropletId: string) => {
+const takeSnapshot = async (dropletId: string) => {
     const snapshotResult = await axios.post(dropletActionUrl(dropletId), { type: "snapshot" }, config());
     const actionId = snapshotResult.data.action.id;
 
     let status = await axios.get(actionUrl(actionId), config());
-    while (status.data.status == "in-progress") {
+    while (status.data.status != "completed") {
+        console.log("Waiting for snapshot to complete, action status currently: " + status.data.status)
         await new Promise((resolve) => setTimeout(resolve, 2500));
         status = await axios.get(actionUrl(actionId), config());
     }
@@ -37,7 +38,7 @@ const snapshotDroplet = async (dropletId: string) => {
 
 
 export default {
-    snapshotDroplet,
+    takeSnapshot,
     getSnapshotId,
     deleteSnapshot
 }
