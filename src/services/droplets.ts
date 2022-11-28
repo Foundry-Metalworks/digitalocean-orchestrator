@@ -92,9 +92,6 @@ const startDroplet = async () => {
     await networkService.updateDomain(mappingId.id, ip.ip);
     console.log(`updated network mapping`)
 
-    console.log('deleting snapshot asynchronously');
-    snapshotService.deleteSnapshot(snapshotId.id);
-
     return ok;
 }
 

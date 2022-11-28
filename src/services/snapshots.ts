@@ -16,22 +16,29 @@ const getSnapshotId = async () => {
 }
 
 const deleteSnapshot = async (id: string) => {
+    console.log("Deleting snapshot with id: " + id);
     await axios.delete(snapshotUrl(id), config());
+    console.log("Deleted snapshot");
 
     return ok;
 }
 
 
 const takeSnapshot = async (dropletId: string) => {
+    const oldSnapshotId = await getSnapshotId();
     const snapshotResult = await axios.post(dropletActionUrl(dropletId), { type: "snapshot" }, config());
     const actionId = snapshotResult.data.action.id;
 
+    console.log("Taking snapshot of droplet with id: " + dropletId);
     let status = await axios.get(actionUrl(actionId), config());
     while (status.data.status != "completed") {
-        console.log("Waiting for snapshot to complete, action status currently: " + status.data.status)
+        console.log("Waiting for completion, action status currently: " + status.data.status)
         await new Promise((resolve) => setTimeout(resolve, 2500));
         status = await axios.get(actionUrl(actionId), config());
     }
+    console.log("Finished taking snapshot");
+
+    await deleteSnapshot(oldSnapshotId.id);
 
     return ok;
 }
