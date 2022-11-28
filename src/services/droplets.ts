@@ -1,7 +1,7 @@
 import axios from 'axios';
 import mapper from './mapper/droplets';
-import snapshotService from './snapshots';
-import networkService from './network';
+import { getSnapshotId, takeSnapshot } from "./snapshots";
+import { getDomainMapId, updateDomain } from "./network";
 import { config } from '../util/axios';
 
 const ok = "ok";
@@ -9,7 +9,7 @@ const dropletBaseUrl = "https://api.digitalocean.com/v2/droplets";
 const dropletUrl = (id: string) => `https://api.digitalocean.com/v2/droplets/${id}`;
 const dropletActionUrl = (id: string) => `https://api.digitalocean.com/v2/droplets/${id}/actions`;
 
-const getDropletId = async () => {
+export const getDropletId = async () => {
     const result = await axios.get(dropletBaseUrl, config({ tag_name: 'dnd' }));
 
     return mapper.fromIdResponse(result.data);
@@ -45,7 +45,7 @@ const waitForStopped = async (id: string) => {
 
 const snapshotAndDelete = async (dropletId: string) => {
     console.log('snapshotting droplet');
-    await snapshotService.takeSnapshot(dropletId);
+    await takeSnapshot(dropletId);
     console.log('deleting droplet');
     await axios.delete(dropletUrl(dropletId), config());
 }
@@ -71,7 +71,7 @@ const waitForStarted = async (id: string) => {
 }
 
 const startDroplet = async () => {
-    const snapshotId = await snapshotService.getSnapshotId();
+    const snapshotId = await getSnapshotId();
 
     console.log(`starting droplet from snapshot id: ${snapshotId.id}`);
     const result = await axios.post(dropletBaseUrl,  {
@@ -87,9 +87,9 @@ const startDroplet = async () => {
     console.log(`started droplet with id: ${id}`);
 
     console.log(`updating network mapping`)
-    const mappingId = await networkService.getDomainMapId();
+    const mappingId = await getDomainMapId();
     const ip = await getDropletIP(id);
-    await networkService.updateDomain(mappingId.id, ip.ip);
+    await updateDomain(mappingId.id, ip.ip);
     console.log(`updated network mapping`)
 
     return ok;

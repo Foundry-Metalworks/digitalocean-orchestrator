@@ -6,13 +6,13 @@ const ok = "ok";
 const baseDomainUrl = () => `https://api.digitalocean.com/v2/domains/${process.env.DOMAIN_NAME}/records`;
 const domainUrl = (id: string) => `https://api.digitalocean.com/v2/domains/${process.env.DOMAIN_NAME}/records/${id}`;
 
-const getDomainMapId = async () => {
+export const getDomainMapId = async () => {
     const result = await axios.get(baseDomainUrl(), config({ type: "A" }));
 
     return mapper.fromIdResponse(result.data);
 }
 
-const updateDomain = async (id: string, ip: string) => {
+export const updateDomain = async (id: string, ip: string) => {
     const data = {
         type: "A",
         data: ip

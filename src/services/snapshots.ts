@@ -8,7 +8,7 @@ const actionUrl = (id: string) => `https://api.digitalocean.com/v2/actions/${id}
 const snapshotUrl = (id: string) => `https://api.digitalocean.com/v2/snapshots/${id}`;
 
 
-const getSnapshotId = async () => {
+export const getSnapshotId = async () => {
     const url = "https://api.digitalocean.com/v2/snapshots";
     const result = await axios.get(url, config({ tag_name: "dnd", resource_type: "droplet" }));
 
@@ -24,7 +24,7 @@ const deleteSnapshot = async (id: string) => {
 }
 
 
-const takeSnapshot = async (dropletId: string) => {
+export const takeSnapshot = async (dropletId: string) => {
     const oldSnapshotId = await getSnapshotId();
     const snapshotResult = await axios.post(dropletActionUrl(dropletId), { type: "snapshot" }, config());
     const actionId = snapshotResult.data.action.id;
