@@ -32,7 +32,7 @@ const waitForStopped = async (id: string) => {
     let count = 0;
     let status = await getDropletStatus(id);
     while (status.status != "off") {
-        if (count++ == 48) {
+        if (count++ == 120) {
             console.log('waited too long, killing...');
             await killDroplet(id);
         }
