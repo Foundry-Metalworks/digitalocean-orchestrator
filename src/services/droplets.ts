@@ -44,10 +44,10 @@ const waitForStopped = async (id: string) => {
 };
 
 const snapshotAndDelete = async (dropletId: string) => {
-    console.log('snapshotting droplet');
     await takeSnapshot(dropletId);
-    console.log('deleting droplet');
+    console.log("Deleting droplet with id: " + dropletId);
     await axios.delete(dropletUrl(dropletId), config());
+    console.log("Deleted droplet with id: " + dropletId);
 }
 
 const stopDroplet = async (id: string) => {
@@ -56,7 +56,7 @@ const stopDroplet = async (id: string) => {
     await waitForStopped(id);
     console.log(`stopped droplet with id: ${id}`);
 
-    snapshotAndDelete(id);
+    await snapshotAndDelete(id);
 
     return ok;
 }

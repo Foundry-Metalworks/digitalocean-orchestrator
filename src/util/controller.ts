@@ -8,6 +8,7 @@ export const tryCatchHelper = (func: Function) => {
             result = await func();
         }
         catch (e) {
+            console.log("Request failed");
             console.log(e);
             return res.status(500).send();
         }

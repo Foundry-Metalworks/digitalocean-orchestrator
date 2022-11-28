@@ -23,18 +23,20 @@ const deleteSnapshot = async (id: string) => {
     return ok;
 }
 
-
 export const takeSnapshot = async (dropletId: string) => {
     const oldSnapshotId = await getSnapshotId();
     const snapshotResult = await axios.post(dropletActionUrl(dropletId), { type: "snapshot" }, config());
     const actionId = snapshotResult.data.action.id;
 
     console.log("Taking snapshot of droplet with id: " + dropletId);
-    let status = await axios.get(actionUrl(actionId), config());
-    while (status.data.status != "completed") {
-        console.log("Waiting for completion, action status currently: " + status.data.status)
+    let status = (await axios.get(actionUrl(actionId), config())).data.action.status;
+    while (status != "completed") {
+        console.log("Waiting for completion, action status currently: " + status);
+        if (status == "errored") {
+            throw Error("Failed to take snapshot of droplet with id: " + dropletId);
+        }
         await new Promise((resolve) => setTimeout(resolve, 2500));
-        status = await axios.get(actionUrl(actionId), config());
+        status = (await axios.get(actionUrl(actionId), config())).data.action.status;
     }
     console.log("Finished taking snapshot");
 
