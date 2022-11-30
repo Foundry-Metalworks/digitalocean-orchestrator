@@ -18,11 +18,13 @@ const onStopRequest = tryCatchHelper(async () => {
     const id = await dropletService.getDropletId();
     const result = await dropletService.stopDroplet(id.id);
     await snapshotService.takeSnapshot(id.id);
+    await dropletService.deleteDroplet(id.id);
     return result;
 });
 
 const onStartRequest = tryCatchHelper(async () => {
     const snapshotId = await snapshotService.getSnapshotId();
+    if (snapshotId == null) throw new Error("Null snapshot id");
     const result = await dropletService.startDroplet(snapshotId.id);
     const ip = await dropletService.getDropletIP(result.id);
     await networkService.updateDomain(result.id, ip.ip);

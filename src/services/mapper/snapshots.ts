@@ -1,6 +1,10 @@
 /* eslint-disable  @typescript-eslint/no-explicit-any */
 const fromGetIdResponse = (data: any) => {
-    return { id: data.snapshots[0].id };
+    const snapshots = data.snapshots;
+    if (snapshots.length > 0) {
+        return { id : snapshots[0].id };
+    }
+    return null;
 }
 
 export default {

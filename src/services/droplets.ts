@@ -66,12 +66,11 @@ const waitForStarted = async (id: string) => {
 }
 
 const startDroplet = async (snapshotId: string) => {
-
     console.log(`starting droplet from snapshot id: ${snapshotId}`);
     const result = await axios.post(dropletBaseUrl,  {
             name: "tenzin-dnd",
             region: "tor1",
-            size: "s-2vcpu-2gb-amd",
+            size: "s-2vcpu-2gb",
             image: snapshotId,
             tags: ["dnd"]
         },

@@ -10,7 +10,7 @@ const snapshotUrl = (id: string) => `https://api.digitalocean.com/v2/snapshots/$
 
 const getSnapshotId = async () => {
     const url = "https://api.digitalocean.com/v2/snapshots";
-    const result = await axios.get(url, config({ tag_name: "dnd", resource_type: "droplet" }));
+    const result = await axios.get(url, config({ name: `foundry.${process.env.DOMAIN_NAME}`, resource_type: "droplet" }));
 
     return mapper.fromIdResponse(result.data);
 }
@@ -25,8 +25,12 @@ const deleteSnapshot = async (id: string) => {
 
 const takeSnapshot = async (dropletId: string) => {
     const oldSnapshotId = await getSnapshotId();
-    const snapshotResult = await axios.post(dropletActionUrl(dropletId), { type: "snapshot" }, config());
+    const snapshotResult = await axios.post(dropletActionUrl(dropletId), { type: "snapshot", name: `foundry.${process.env.DOMAIN_NAME}` }, config());
     const actionId = snapshotResult.data.action.id;
+
+    if (oldSnapshotId != null) {
+        await deleteSnapshot(oldSnapshotId.id);
+    }
 
     console.log("Taking snapshot of droplet with id: " + dropletId);
     let status = (await axios.get(actionUrl(actionId), config())).data.action.status;
@@ -38,9 +42,8 @@ const takeSnapshot = async (dropletId: string) => {
         await new Promise((resolve) => setTimeout(resolve, 2500));
         status = (await axios.get(actionUrl(actionId), config())).data.action.status;
     }
-    console.log("Finished taking snapshot");
+    console.log("Took snapshot");
 
-    await deleteSnapshot(oldSnapshotId.id);
 
     return ok;
 }
