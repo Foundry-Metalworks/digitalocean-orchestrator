@@ -6,18 +6,21 @@ const ok = "ok";
 const baseDomainUrl = () => `https://api.digitalocean.com/v2/domains/${process.env.DOMAIN_NAME}/records`;
 const domainUrl = (id: string) => `https://api.digitalocean.com/v2/domains/${process.env.DOMAIN_NAME}/records/${id}`;
 
-export const getDomainMapId = async () => {
+const getDomainMapId = async () => {
     const result = await axios.get(baseDomainUrl(), config({ type: "A" }));
 
     return mapper.fromIdResponse(result.data);
 }
 
-export const updateDomain = async (id: string, ip: string) => {
+const updateDomain = async (id: string) => {
+    console.log(`updating network mapping for droplet with id: ${id}`);
+    const domainId = await getDomainMapId();
     const data = {
         type: "A",
-        data: ip
+        data: domainId.id
     }
     await axios.patch(domainUrl(id), data, config());
+    console.log(`updated network mapping`);
 
     return ok;
 }

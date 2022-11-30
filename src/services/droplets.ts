@@ -1,7 +1,5 @@
 import axios from 'axios';
 import mapper from './mapper/droplets';
-import { getSnapshotId, takeSnapshot } from "./snapshots";
-import { getDomainMapId, updateDomain } from "./network";
 import { config } from '../util/axios';
 
 const ok = "ok";
@@ -43,11 +41,10 @@ const waitForStopped = async (id: string) => {
     }
 };
 
-const snapshotAndDelete = async (dropletId: string) => {
-    await takeSnapshot(dropletId);
-    console.log("Deleting droplet with id: " + dropletId);
-    await axios.delete(dropletUrl(dropletId), config());
-    console.log("Deleted droplet with id: " + dropletId);
+const deleteDroplet = async (id: string) => {
+    console.log("Deleting droplet with id: " + id);
+    await axios.delete(dropletUrl(id), config());
+    console.log("Deleted droplet with id: " + id);
 }
 
 const stopDroplet = async (id: string) => {
@@ -55,8 +52,6 @@ const stopDroplet = async (id: string) => {
     await axios.post(dropletActionUrl(id), { type: "shutdown" }, config());
     await waitForStopped(id);
     console.log(`stopped droplet with id: ${id}`);
-
-    await snapshotAndDelete(id);
 
     return ok;
 }
@@ -70,15 +65,14 @@ const waitForStarted = async (id: string) => {
     }
 }
 
-const startDroplet = async () => {
-    const snapshotId = await getSnapshotId();
+const startDroplet = async (snapshotId: string) => {
 
-    console.log(`starting droplet from snapshot id: ${snapshotId.id}`);
+    console.log(`starting droplet from snapshot id: ${snapshotId}`);
     const result = await axios.post(dropletBaseUrl,  {
             name: "tenzin-dnd",
             region: "tor1",
             size: "s-2vcpu-2gb-amd",
-            image: snapshotId.id,
+            image: snapshotId,
             tags: ["dnd"]
         },
         config());
@@ -86,13 +80,7 @@ const startDroplet = async () => {
     await waitForStarted(id);
     console.log(`started droplet with id: ${id}`);
 
-    console.log(`updating network mapping`)
-    const mappingId = await getDomainMapId();
-    const ip = await getDropletIP(id);
-    await updateDomain(mappingId.id, ip.ip);
-    console.log(`updated network mapping`)
-
-    return ok;
+    return { id };
 }
 
 const getDropletIP = async (id: string) => {
@@ -106,6 +94,7 @@ export default {
     getDropletStatus,
     killDroplet,
     stopDroplet,
+    deleteDroplet,
     startDroplet,
     getDropletIP
 };
