@@ -24,7 +24,8 @@ const onStopRequest = tryCatchHelper(async () => {
 const onStartRequest = tryCatchHelper(async () => {
     const snapshotId = await snapshotService.getSnapshotId();
     const result = await dropletService.startDroplet(snapshotId.id);
-    await networkService.updateDomain(result.id);
+    const ip = await dropletService.getDropletIP(result.id);
+    await networkService.updateDomain(result.id, ip.ip);
     return result;
 });
 
