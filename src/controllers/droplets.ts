@@ -1,44 +1,47 @@
 import dropletService from "../services/droplets";
 import snapshotService from "../services/snapshots";
 import networkService from "../services/network";
-import {tryCatchHelper} from "../util/controller";
+import { digitalOceanHelper } from "../util/controller";
 
-const onStatusRequest = tryCatchHelper(async () => {
-    let id;
-    try {
-        id = await dropletService.getDropletId();
-    }
-    catch (e) {
-        return { status: "deleted" };
-    }
-    return await dropletService.getDropletStatus(id.id);
+const onStatusRequest = digitalOceanHelper(async (axios, subdomain) => {
+  let id;
+  try {
+    id = await dropletService.getDropletId(axios, subdomain);
+  } catch (e) {
+    return { status: "deleted" };
+  }
+  return await dropletService.getDropletStatus(axios, id.id);
 });
 
-const onStopRequest = tryCatchHelper(async () => {
-    const id = await dropletService.getDropletId();
-    const result = await dropletService.stopDroplet(id.id);
-    await snapshotService.takeSnapshot(id.id);
-    await dropletService.deleteDroplet(id.id);
-    return result;
+const onStopRequest = digitalOceanHelper(async (axios, subdomain) => {
+  const id = await dropletService.getDropletId(axios, subdomain);
+  const result = await dropletService.stopDroplet(axios, id.id);
+  await snapshotService.takeSnapshot(axios, subdomain, id.id);
+  await dropletService.deleteDroplet(axios, id.id);
+  return result;
 });
 
-const onStartRequest = tryCatchHelper(async () => {
-    const snapshotId = await snapshotService.getSnapshotId();
-    if (snapshotId == null) throw new Error("Null snapshot id");
-    const result = await dropletService.startDroplet(snapshotId.id);
-    const ip = await dropletService.getDropletIP(result.id);
-    await networkService.updateDomain(result.id, ip.ip);
-    return result;
+const onStartRequest = digitalOceanHelper(async (axios, subdomain) => {
+  const snapshotId = await snapshotService.getSnapshotId(axios, subdomain);
+  if (snapshotId == null) throw new Error("Null snapshot id");
+  const result = await dropletService.startDroplet(
+    axios,
+    subdomain,
+    snapshotId.id
+  );
+  const ip = await dropletService.getDropletIP(axios, result.id);
+  await networkService.updateDomain(axios, subdomain, result.id, ip.ip);
+  return result;
 });
 
-const onIPRequest = tryCatchHelper(async () => {
-    const id = await dropletService.getDropletId();
-    return await dropletService.getDropletIP(id.id);
-})
+const onIPRequest = digitalOceanHelper(async (axios, subdomain) => {
+  const id = await dropletService.getDropletId(axios, subdomain);
+  return await dropletService.getDropletIP(axios, id.id);
+});
 
 export default {
-    onStatusRequest,
-    onStopRequest,
-    onStartRequest,
-    onIPRequest
-}
+  onStatusRequest,
+  onStopRequest,
+  onStartRequest,
+  onIPRequest,
+};

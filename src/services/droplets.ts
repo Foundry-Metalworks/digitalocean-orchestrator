@@ -1,99 +1,108 @@
-import axios from 'axios';
-import mapper from './mapper/droplets';
-import { config } from '../util/axios';
+import { AxiosInstance } from "axios";
+import mapper from "./mapper/droplets";
+import { ServiceFunc } from "../util/service";
+import { get, post, remove } from "../util/axios";
 
 const ok = "ok";
-const dropletBaseUrl = "https://api.digitalocean.com/v2/droplets";
-const dropletUrl = (id: string) => `https://api.digitalocean.com/v2/droplets/${id}`;
-const dropletActionUrl = (id: string) => `https://api.digitalocean.com/v2/droplets/${id}/actions`;
+const dropletBaseUrl = "droplets";
+const dropletUrl = (id: string) => `droplets/${id}`;
+const dropletActionUrl = (id: string) => `droplets/${id}/actions`;
 
-export const getDropletId = async () => {
-    const result = await axios.get(dropletBaseUrl, config({ tag_name: 'dnd' }));
+export const getDropletId: ServiceFunc<[name: string]> = async (
+  axios: AxiosInstance,
+  name: string
+) => {
+  const result = await get(axios, dropletBaseUrl, {
+    name: `${name}.${process.env.DOMAIN_NAME}`,
+    tag_name: "dnd",
+  });
 
-    return mapper.fromIdResponse(result.data);
-}
-
-const getDropletStatus = async (id: string) => {
-    const result = await axios.get(dropletUrl(id), config({}));
-
-    return mapper.fromStatusResponse(result.data);
-}
-
-const killDroplet = async (id: string) => {
-    await axios.post(dropletActionUrl(id), { type: "power_off" }, config());
-    console.log(`killed droplet with id: ${id}`);
-
-    return ok;
-}
-
-const waitForStopped = async (id: string) => {
-    let count = 0;
-    let status = await getDropletStatus(id);
-    while (status.status != "off") {
-        if (count++ == 120) {
-            console.log('waited too long, killing...');
-            await killDroplet(id);
-        }
-        else {
-            await new Promise((resolve) => setTimeout(resolve, 2500));
-            status = await getDropletStatus(id);
-        }
-    }
+  return mapper.fromIdResponse(result.data);
 };
 
-const deleteDroplet = async (id: string) => {
-    console.log("Deleting droplet with id: " + id);
-    await axios.delete(dropletUrl(id), config());
-    console.log("Deleted droplet with id: " + id);
-}
+const getDropletStatus = async (axios: AxiosInstance, id: string) => {
+  const result = await get(axios, dropletUrl(id));
 
-const stopDroplet = async (id: string) => {
-    console.log(`stopping droplet with id: ${id}`);
-    await axios.post(dropletActionUrl(id), { type: "shutdown" }, config());
-    await waitForStopped(id);
-    console.log(`stopped droplet with id: ${id}`);
+  return mapper.fromStatusResponse(result.data);
+};
 
-    return ok;
-}
+const killDroplet = async (axios: AxiosInstance, id: string) => {
+  await post(axios, dropletActionUrl(id), { type: "power_off" });
+  console.log(`killed droplet with id: ${id}`);
 
-const waitForStarted = async (id: string) => {
-    const status = await getDropletStatus(id);
+  return ok;
+};
 
-    if (status.status != "active") {
-        await new Promise(resolve => setTimeout(resolve, 2500));
-        await waitForStarted(id);
+const waitForStopped = async (axios: AxiosInstance, id: string) => {
+  let count = 0;
+  let status = await getDropletStatus(axios, id);
+  while (status.status != "off") {
+    if (count++ == 60) {
+      console.log("waited too long, killing...");
+      await killDroplet(axios, id);
+    } else {
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+      status = await getDropletStatus(axios, id);
     }
-}
+  }
+};
 
-const startDroplet = async (snapshotId: string) => {
-    console.log(`starting droplet from snapshot id: ${snapshotId}`);
-    const result = await axios.post(dropletBaseUrl,  {
-            name: "tenzin-dnd",
-            region: "tor1",
-            size: "s-2vcpu-2gb",
-            image: snapshotId,
-            tags: ["dnd"]
-        },
-        config());
-    const id = result.data.droplet.id;
-    await waitForStarted(id);
-    console.log(`started droplet with id: ${id}`);
+const deleteDroplet = async (axios: AxiosInstance, id: string) => {
+  console.log("Deleting droplet with id: " + id);
+  await remove(axios, dropletUrl(id));
+  console.log("Deleted droplet with id: " + id);
+};
 
-    return { id };
-}
+const stopDroplet = async (axios: AxiosInstance, id: string) => {
+  console.log(`stopping droplet with id: ${id}`);
+  await post(axios, dropletActionUrl(id), { type: "shutdown" });
+  await waitForStopped(axios, id);
+  console.log(`stopped droplet with id: ${id}`);
 
-const getDropletIP = async (id: string) => {
-    const result = await axios.get(dropletUrl(id), config());
+  return ok;
+};
 
-    return mapper.fromIPResponse(result.data);
-}
+const waitForStarted = async (axios: AxiosInstance, id: string) => {
+  const status = await getDropletStatus(axios, id);
+
+  if (status.status != "active") {
+    await new Promise((resolve) => setTimeout(resolve, 2500));
+    await waitForStarted(axios, id);
+  }
+};
+
+const startDroplet = async (
+  axios: AxiosInstance,
+  name: string,
+  snapshotId: string
+) => {
+  console.log(`starting droplet from snapshot id: ${snapshotId}`);
+  const result = await post(axios, dropletBaseUrl, {
+    name: `${name}.${process.env.DOMAIN_NAME}`,
+    region: "tor1",
+    size: "s-2vcpu-2gb",
+    image: snapshotId,
+    tags: ["dnd"],
+  });
+  const id = result.data.droplet.id;
+  await waitForStarted(axios, id);
+  console.log(`started droplet with id: ${id}`);
+
+  return { id };
+};
+
+const getDropletIP = async (axios: AxiosInstance, id: string) => {
+  const result = await get(axios, dropletUrl(id));
+
+  return mapper.fromIPResponse(result.data);
+};
 
 export default {
-    getDropletId,
-    getDropletStatus,
-    killDroplet,
-    stopDroplet,
-    deleteDroplet,
-    startDroplet,
-    getDropletIP
+  getDropletId,
+  getDropletStatus,
+  killDroplet,
+  stopDroplet,
+  deleteDroplet,
+  startDroplet,
+  getDropletIP,
 };

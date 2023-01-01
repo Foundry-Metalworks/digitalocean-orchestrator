@@ -1,12 +1,15 @@
-import { tryCatchHelper } from "../util/controller";
-import { getDropletId }  from "../services/droplets";
+import { digitalOceanHelper } from "../util/controller";
+import { getDropletId } from "../services/droplets";
 import service from "../services/snapshots";
+import { AxiosInstance } from "axios";
 
-const onSaveRequest = tryCatchHelper(async () => {
-    const dropletId = (await getDropletId()).id;
-    return await service.takeSnapshot(dropletId);
-});
+const onSaveRequest = digitalOceanHelper(
+  async (axios: AxiosInstance, subdomain: string) => {
+    const dropletId = (await getDropletId(axios, subdomain)).id;
+    return await service.takeSnapshot(axios, subdomain, dropletId);
+  }
+);
 
 export default {
-    onSaveRequest
-}
+  onSaveRequest,
+};
