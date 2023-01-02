@@ -21,9 +21,7 @@ app.use(cors());
 app.disable("etag");
 app.use("/api", router);
 app.listen(PORT, () => {
-  console.log(
-    `[server]: digitalocean-orchestrator is running at http://localhost:${PORT}`
-  );
+  console.log(`[server]: metalworks-orchestrator is running at port ${PORT}`);
 });
 
 export default app;
