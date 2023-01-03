@@ -7,17 +7,6 @@ const fromGetServerResponse = (data: any[]) => {
   };
 };
 
-const fromGetUserResponse = (data: any[]) => {
-  return {
-    server: data.length > 0 ? data[0].server : null,
-  };
-};
-
 export default {
-  server: {
-    fromGetResponse: fromGetServerResponse,
-  },
-  user: {
-    fromGetResponse: fromGetUserResponse,
-  },
+  fromGetResponse: fromGetServerResponse,
 };

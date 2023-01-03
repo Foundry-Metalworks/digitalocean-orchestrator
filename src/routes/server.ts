@@ -13,29 +13,10 @@ routes.get(
 );
 routes.post(
   "/",
-  body("name").exists(),
-  body("doToken").exists(),
+  body("name").isString(),
+  body("doToken").isString(),
   validationHelper,
   serverController.setServerTokens
-);
-routes.get(
-  "/user/:email/exists",
-  param("email").isEmail(),
-  validationHelper,
-  serverController.userHasServer
-);
-routes.get(
-  "/user/:email",
-  param("email").isEmail(),
-  validationHelper,
-  serverController.getUserServer
-);
-routes.post(
-  "/user",
-  body("email").isEmail(),
-  body("server").isString(),
-  validationHelper,
-  serverController.setUserServer
 );
 
 export default routes;

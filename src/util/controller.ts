@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import axios, { AxiosInstance } from "axios";
 import { validationResult } from "express-validator";
+import { getUser } from "./auth";
 
 export type RouteResult = {
   code: number;
@@ -40,14 +41,16 @@ export const digitalOceanHelper = (
   func: (axios: AxiosInstance, server: string) => Promise<RouteResult>
 ) => {
   return async (req: Request, res: Response) => {
-    const axiosInstance = axios.create({
-      url: "https://api.digitalocean.com/v2",
-    });
-    const server = req.params.server as string;
-    if (server == null) return res.status(400).send();
     let result;
     try {
-      result = await func(axiosInstance, server);
+      const user = await getUser(req);
+      const axiosInstance = axios.create({
+        url: "https://api.digitalocean.com/v2",
+        headers: {
+          Authorization: `Bearer ${user.doToken}`,
+        },
+      });
+      result = await func(axiosInstance, user.server);
     } catch (e) {
       console.log("Request failed");
       console.error(e);

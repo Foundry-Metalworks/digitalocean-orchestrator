@@ -15,29 +15,7 @@ export const getServerTokens = tryCatchHelper(async (req: Request) => {
   return { code: 200, result };
 });
 
-export const userHasServer = tryCatchHelper(async (req: Request) => {
-  const email = req.params.email;
-  const result = await serverService.getForUser(email);
-  return { code: 200, result: result.server != null };
-});
-
-export const getUserServer = tryCatchHelper(async (req: Request) => {
-  const email = req.params.email;
-  const result = await serverService.getForUser(email);
-  return { code: 200, result };
-});
-
-export const setUserServer = tryCatchHelper(async (req: Request) => {
-  const email = req.body.email;
-  const name = req.body.server;
-  const result = await serverService.setForUser(email, name);
-  return { code: 200, result };
-});
-
 export default {
   getServerTokens,
   setServerTokens,
-  userHasServer,
-  getUserServer,
-  setUserServer,
 };
