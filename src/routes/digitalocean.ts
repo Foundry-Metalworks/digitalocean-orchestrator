@@ -1,15 +1,35 @@
 import express from "express";
 import dropletsController from "../controllers/droplets";
 import snapshotsController from "../controllers/snapshots";
-import networkController from "../controllers/network";
+import { auth, requiredScopes } from "express-oauth2-jwt-bearer";
+import * as dotenv from "dotenv";
 
-const routes = express.Router();
+dotenv.config();
 
-routes.post("/:domainName/start", dropletsController.onStartRequest);
-routes.post("/:domainName/stop", dropletsController.onStopRequest);
-routes.post("/:domainName/save", snapshotsController.onSaveRequest);
-routes.get("/:domainName/status", dropletsController.onStatusRequest);
-routes.get("/:domainName/ip", dropletsController.onIPRequest);
-routes.get("/:domainName", networkController.onNameRequest);
+const routes = express.Router({ mergeParams: true });
+routes.use(
+  auth({
+    audience: process.env.URL,
+    issuerBaseURL: `https://metalworks.us.auth0.com/`,
+  })
+);
+routes.get("/", (req, res) => {
+  res.send(200);
+});
+routes.post(
+  "/start",
+  requiredScopes("admin"),
+  dropletsController.onStartRequest
+);
+routes.post("/stop", requiredScopes("admin"), dropletsController.onStopRequest);
+routes.post(
+  "/save",
+  requiredScopes("admin"),
+  snapshotsController.onSaveRequest
+);
+routes.get("/status", dropletsController.onStatusRequest);
+routes.get("/ip", dropletsController.onIPRequest);
 
-export default routes;
+const instanceRouter = express.Router();
+instanceRouter.use("/:server", routes);
+export default instanceRouter;

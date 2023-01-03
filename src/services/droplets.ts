@@ -1,17 +1,12 @@
 import { AxiosInstance } from "axios";
 import mapper from "./mapper/droplets";
-import { ServiceFunc } from "../util/service";
 import { get, post, remove } from "../util/axios";
 
-const ok = "ok";
 const dropletBaseUrl = "droplets";
 const dropletUrl = (id: string) => `droplets/${id}`;
 const dropletActionUrl = (id: string) => `droplets/${id}/actions`;
 
-export const getDropletId: ServiceFunc<[name: string]> = async (
-  axios: AxiosInstance,
-  name: string
-) => {
+export const getDropletId = async (axios: AxiosInstance, name: string) => {
   const result = await get(axios, dropletBaseUrl, {
     name: `${name}.${process.env.DOMAIN_NAME}`,
     tag_name: "dnd",
@@ -29,8 +24,6 @@ const getDropletStatus = async (axios: AxiosInstance, id: string) => {
 const killDroplet = async (axios: AxiosInstance, id: string) => {
   await post(axios, dropletActionUrl(id), { type: "power_off" });
   console.log(`killed droplet with id: ${id}`);
-
-  return ok;
 };
 
 const waitForStopped = async (axios: AxiosInstance, id: string) => {
@@ -58,8 +51,6 @@ const stopDroplet = async (axios: AxiosInstance, id: string) => {
   await post(axios, dropletActionUrl(id), { type: "shutdown" });
   await waitForStopped(axios, id);
   console.log(`stopped droplet with id: ${id}`);
-
-  return ok;
 };
 
 const waitForStarted = async (axios: AxiosInstance, id: string) => {

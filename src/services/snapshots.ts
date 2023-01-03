@@ -1,6 +1,5 @@
 import { AxiosInstance } from "axios";
 import mapper from "./mapper/snapshots";
-import { ServiceFunc } from "../util/service";
 import { get, post, remove } from "../util/axios";
 
 const ok = "ok";
@@ -8,10 +7,7 @@ const actionUrl = (id: string) => `actions/${id}`;
 const dropletActionUrl = (id: string) => `droplets/${id}/actions`;
 const snapshotUrl = (id: string) => `snapshots/${id}`;
 
-const getSnapshotId: ServiceFunc<[string]> = async (
-  axios: AxiosInstance,
-  name: string
-) => {
+const getSnapshotId = async (axios: AxiosInstance, name: string) => {
   const result = await get(axios, "snapshots", {
     name: `${name}.${process.env.DOMAIN_NAME}`,
     resource_type: "droplet",
@@ -20,10 +16,7 @@ const getSnapshotId: ServiceFunc<[string]> = async (
   return mapper.fromIdResponse(result.data);
 };
 
-const deleteSnapshot: ServiceFunc<[string]> = async (
-  axios: AxiosInstance,
-  id: string
-) => {
+const deleteSnapshot = async (axios: AxiosInstance, id: string) => {
   console.log("Deleting snapshot with id: " + id);
   await remove(axios, snapshotUrl(id));
   console.log("Deleted snapshot");
@@ -31,7 +24,7 @@ const deleteSnapshot: ServiceFunc<[string]> = async (
   return ok;
 };
 
-const takeSnapshot: ServiceFunc<[string, string]> = async (
+const takeSnapshot = async (
   axios: AxiosInstance,
   name: string,
   dropletId: string

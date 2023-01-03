@@ -1,6 +1,5 @@
 import { AxiosInstance } from "axios";
 import mapper from "./mapper/network";
-import { ServiceFunc } from "../util/service";
 import { get, patch, post } from "../util/axios";
 
 const ok = "ok";
@@ -11,7 +10,7 @@ const fixAuth = (axios: AxiosInstance) => {
   ] = `Bearer ${process.env.DO_TOKEN}`;
 };
 
-const getOrCreateDomainMap: ServiceFunc<[name: string, ip: string]> = async (
+const getOrCreateDomainMap = async (
   axios: AxiosInstance,
   name: string,
   ip: string
@@ -29,18 +28,18 @@ const getOrCreateDomainMap: ServiceFunc<[name: string, ip: string]> = async (
   return mapper.fromIdResponse(result.data);
 };
 
-const checkDomain: ServiceFunc<[name: string]> = async (
-  axios: AxiosInstance,
-  name: string
-) => {
+const checkDomain = async (axios: AxiosInstance, name: string) => {
   fixAuth(axios);
   const result = await get(axios, domainUrl, { name, type: "A" });
   return result.data.domain_records.count <= 0;
 };
 
-const updateDomain: ServiceFunc<
-  [name: string, id: string, ip: string]
-> = async (axios: AxiosInstance, name: string, id: string, ip: string) => {
+const updateDomain = async (
+  axios: AxiosInstance,
+  name: string,
+  id: string,
+  ip: string
+) => {
   fixAuth(axios);
   console.log(`updating network mapping for droplet with id: ${id}`);
   const domainId = await getOrCreateDomainMap(axios, name, ip);

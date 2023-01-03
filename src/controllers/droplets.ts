@@ -8,17 +8,21 @@ const onStatusRequest = digitalOceanHelper(async (axios, subdomain) => {
   try {
     id = await dropletService.getDropletId(axios, subdomain);
   } catch (e) {
-    return { status: "deleted" };
+    return { code: 200, result: { status: "deleted" } };
   }
-  return await dropletService.getDropletStatus(axios, id.id);
+  const result = await dropletService.getDropletStatus(axios, id.id);
+  return {
+    code: 200,
+    result,
+  };
 });
 
 const onStopRequest = digitalOceanHelper(async (axios, subdomain) => {
   const id = await dropletService.getDropletId(axios, subdomain);
-  const result = await dropletService.stopDroplet(axios, id.id);
+  await dropletService.stopDroplet(axios, id.id);
   await snapshotService.takeSnapshot(axios, subdomain, id.id);
   await dropletService.deleteDroplet(axios, id.id);
-  return result;
+  return { code: 200 };
 });
 
 const onStartRequest = digitalOceanHelper(async (axios, subdomain) => {
@@ -31,12 +35,13 @@ const onStartRequest = digitalOceanHelper(async (axios, subdomain) => {
   );
   const ip = await dropletService.getDropletIP(axios, result.id);
   await networkService.updateDomain(axios, subdomain, result.id, ip.ip);
-  return result;
+  return { code: 200, result };
 });
 
 const onIPRequest = digitalOceanHelper(async (axios, subdomain) => {
   const id = await dropletService.getDropletId(axios, subdomain);
-  return await dropletService.getDropletIP(axios, id.id);
+  const result = await dropletService.getDropletIP(axios, id.id);
+  return { code: 200, result };
 });
 
 export default {
