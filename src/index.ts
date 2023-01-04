@@ -19,8 +19,8 @@ app.use(
 );
 app.use(
   auth({
-    audience: process.env.URL,
-    issuerBaseURL: process.env.CLIENT_DOMAIN,
+    audience: process.env.AUDIENCE_URL,
+    issuerBaseURL: process.env.ISSUER_URL,
   })
 );
 app.use(express.json());

@@ -32,7 +32,7 @@ export const getServer = async (name: string) => {
   const query = `
     SELECT dotoken, doiv
     FROM servers
-    WHERE name=${name}
+    WHERE name = '${name}'
   `;
   const result = await client.query(query);
   return mapper.fromGetResponse(result.rows);
