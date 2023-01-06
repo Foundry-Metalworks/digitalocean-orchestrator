@@ -6,6 +6,41 @@ const dropletBaseUrl = "droplets";
 const dropletUrl = (id: string) => `droplets/${id}`;
 const dropletActionUrl = (id: string) => `droplets/${id}/actions`;
 
+const getSetupScript = (name: string) => `
+#!/bin/bash
+read -r -d '' CADDY << END1
+${name}.t2pellet.me {
+    reverse_proxy localhost:30000
+    encode zstd gzip
+}
+END1
+echo "CADDY" > "/etc/caddy/Caddyfile"
+read -r -d '' USERDATA << END2
+{
+  "datapath": "/root/foundryuserdata",
+  "compressStatic": true,
+  "fullscreen" false,
+  "hostname": "${name}.t2pellet.me",
+  "language": "en.core",
+  "localHostname": null,
+  "port": 30000,
+  "protocol": null,
+  "proxyPort": 443,
+  "proxySSL": true,
+  "routePrefix": null,
+  "updateChannel": "stable",
+  "upnp" true,
+  "upnpLeaseDuration": null,
+  "awsConfig": null,
+  "sslCert": null,
+  "sslKey": null,
+  "world": null,
+  "serviceConfig": null
+}
+END2
+echo "$USERDATA" > "/root/foundryuserdata/Config/options.json"
+`;
+
 export const getDropletId = async (axios: AxiosInstance, name: string) => {
   const result = await get(axios, dropletBaseUrl, {
     name: `${name}.${process.env.DOMAIN_NAME}`,
@@ -65,7 +100,8 @@ const waitForStarted = async (axios: AxiosInstance, id: string) => {
 const startDroplet = async (
   axios: AxiosInstance,
   name: string,
-  snapshotId: string
+  snapshotId: string,
+  firstSetup: boolean
 ) => {
   console.log(`starting droplet from snapshot id: ${snapshotId}`);
   const result = await post(axios, dropletBaseUrl, {
@@ -74,6 +110,7 @@ const startDroplet = async (
     size: "s-2vcpu-2gb",
     image: snapshotId,
     tags: ["dnd"],
+    user_data: firstSetup ? getSetupScript(name) : "",
   });
   const id = result.data.droplet.id;
   await waitForStarted(axios, id);

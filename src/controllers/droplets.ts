@@ -27,11 +27,14 @@ const onStopRequest = digitalOceanHelper(async (axios, subdomain) => {
 
 const onStartRequest = digitalOceanHelper(async (axios, subdomain) => {
   const snapshotId = await snapshotService.getSnapshotId(axios, subdomain);
-  if (snapshotId == null) throw new Error("Null snapshot id");
+  const isNew = snapshotId == null;
+  if (isNew) console.log("First time setup");
+
   const result = await dropletService.startDroplet(
     axios,
     subdomain,
-    snapshotId.id
+    isNew ? process.env.DO_IMAGE : snapshotId.id,
+    isNew
   );
   const ip = await dropletService.getDropletIP(axios, result.id);
   await networkService.updateDomain(axios, subdomain, result.id, ip.ip);
