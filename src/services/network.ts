@@ -1,6 +1,8 @@
 import { AxiosInstance } from "axios";
 import mapper from "./mapper/network";
 import { get, patch, post } from "../util/axios";
+import * as dotenv from "dotenv";
+dotenv.config();
 
 const ok = "ok";
 const domainUrl = `domains/${process.env.DOMAIN_NAME}/records`;

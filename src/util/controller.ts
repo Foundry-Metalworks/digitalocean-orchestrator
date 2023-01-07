@@ -45,7 +45,7 @@ export const digitalOceanHelper = (
     try {
       const user = await getUser(req);
       const axiosInstance = axios.create({
-        url: "https://api.digitalocean.com/v2",
+        baseURL: "https://api.digitalocean.com/v2",
         headers: {
           Authorization: `Bearer ${user.doToken}`,
         },
