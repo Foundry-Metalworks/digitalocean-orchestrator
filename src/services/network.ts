@@ -18,7 +18,10 @@ const getOrCreateDomainMap = async (
   ip: string
 ) => {
   fixAuth(axios);
-  let result = await get(axios, domainUrl, { name, type: "A" });
+  let result = await get(axios, domainUrl, {
+    name: `${name}.${process.env.DOMAIN_NAME}`,
+    type: "A",
+  });
   if (result.data.domain_records.count < 1) {
     result = await post(axios, domainUrl, {
       type: "A",

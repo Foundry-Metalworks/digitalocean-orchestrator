@@ -44,7 +44,6 @@ echo "$USERDATA" > "/root/foundryuserdata/Config/options.json"
 export const getDropletId = async (axios: AxiosInstance, name: string) => {
   const result = await get(axios, dropletBaseUrl, {
     name: `${name}.${process.env.DOMAIN_NAME}`,
-    tag_name: "dnd",
   });
 
   return mapper.fromIdResponse(result.data);
