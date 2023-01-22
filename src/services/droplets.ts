@@ -6,15 +6,30 @@ const dropletBaseUrl = "droplets";
 const dropletUrl = (id: string) => `droplets/${id}`;
 const dropletActionUrl = (id: string) => `droplets/${id}/actions`;
 
-const getSetupScript = (name: string) => `
-#!/bin/bash
+const getSetupScript = (name: string) => `#!/bin/bash
+curl -sL https://deb.nodesource.com/setup_18.x | sudo bash -
+sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo tee /etc/apt/sources.list.d/caddy-stable.list
+sudo apt update
+sudo apt install nodejs caddy unzip -y
+sudo npm install pm2 -g
+pm2 startup
+mkdir /root/foundry
+wget --output-document /root/foundry/foundryvtt.zip "${process.env.FOUNDRY_URL}"
+unzip /root/foundry/foundryvtt.zip -d /root/foundry/
+rm /root/foundry/foundryvtt.zip
+mkdir -p /root/foundryuserdata
 read -r -d '' CADDY << END1
 ${name}.t2pellet.me {
     reverse_proxy localhost:30000
     encode zstd gzip
 }
 END1
-echo "CADDY" > "/etc/caddy/Caddyfile"
+echo "$CADDY" > "/etc/caddy/Caddyfile"
+sudo service caddy restart
+pm2 start "node /root/foundry/resources/app/main.js --dataPath=/root/foundryuserdata" --name foundry
+pm2 save
 read -r -d '' USERDATA << END2
 {
   "datapath": "/root/foundryuserdata",
@@ -38,7 +53,10 @@ read -r -d '' USERDATA << END2
   "serviceConfig": null
 }
 END2
+mkdir -d /root/foundryuserdata/Config
 echo "$USERDATA" > "/root/foundryuserdata/Config/options.json"
+pm2 restart foundry
+sudo service caddy restart
 `;
 
 export const getDropletId = async (axios: AxiosInstance, name: string) => {
@@ -99,18 +117,18 @@ const waitForStarted = async (axios: AxiosInstance, id: string) => {
 const startDroplet = async (
   axios: AxiosInstance,
   name: string,
-  snapshotId: string,
-  firstSetup: boolean
+  snapshotId?: string
 ) => {
   console.log(`starting droplet from snapshot id: ${snapshotId}`);
-  const result = await post(axios, dropletBaseUrl, {
+  const data = {
     name: `${name}.${process.env.DOMAIN_NAME}`,
     region: "tor1",
-    size: "s-2vcpu-2gb",
-    image: snapshotId,
+    size: "s-1vcpu-1gb",
     tags: ["dnd"],
-    user_data: firstSetup ? getSetupScript(name) : "",
-  });
+    image: snapshotId || "ubuntu-20-04-x64",
+    user_data: snapshotId == null ? getSetupScript(name) : "",
+  };
+  const result = await post(axios, dropletBaseUrl, data);
   const id = result.data.droplet.id;
   await waitForStarted(axios, id);
   console.log(`started droplet with id: ${id}`);

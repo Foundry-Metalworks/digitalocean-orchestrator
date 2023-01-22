@@ -22,12 +22,13 @@ const getOrCreateDomainMap = async (
     name: `${name}.${process.env.DOMAIN_NAME}`,
     type: "A",
   });
-  if (result.data.domain_records.count < 1) {
+  if (result.data.domain_records.length < 1) {
     result = await post(axios, domainUrl, {
       type: "A",
       data: ip,
       name,
     });
+    return mapper.fromCreateResponse(result.data);
   }
 
   return mapper.fromIdResponse(result.data);

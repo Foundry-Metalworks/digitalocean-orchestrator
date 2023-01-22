@@ -1,7 +1,9 @@
 import { body } from "express-validator";
 import { validationHelper } from "../util/controller";
 import serverController from "../controllers/user";
-import routes from "../routes/server";
+import express from "express";
+
+const routes = express.Router();
 
 routes.get("/exists", serverController.userHasServer);
 routes.get("/", serverController.getUserServer);
