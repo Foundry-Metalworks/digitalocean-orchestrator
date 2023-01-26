@@ -1,7 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import axios, { AxiosInstance } from "axios";
+import { connect } from "./database";
 import { validationResult } from "express-validator";
 import { getUser } from "./auth";
+import { Client } from "pg";
 
 export type RouteResult = {
   code: number;
@@ -23,39 +25,48 @@ export const validationHelper = (
 export const tryCatchHelper = (
   func: (req: Request) => Promise<RouteResult>
 ) => {
-  return async (req: Request, res: Response) => {
-    let result;
+  return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      result = await func(req);
+      const result = await func(req);
+      res.status(result.code).send(result.result);
     } catch (e) {
-      console.log("Request failed");
-      console.error(e);
-      return res.status(500).send();
+      next(e);
     }
-    return res.status(result.code).send(result.result);
   };
+};
+
+export const databaseHelper = (
+  func: (req: Request, client: Client) => Promise<RouteResult>
+) => {
+  const dbRequest = async (req: Request) => {
+    const client = await connect();
+    try {
+      const result = await func(req, client);
+      await client.end();
+      return result;
+    } catch (e) {
+      await client.end();
+      throw e;
+    }
+  };
+
+  return tryCatchHelper(dbRequest);
 };
 
 // eslint-disable-next-line @typescript-eslint/ban-types
 export const digitalOceanHelper = (
   func: (axios: AxiosInstance, server: string) => Promise<RouteResult>
 ) => {
-  return async (req: Request, res: Response) => {
-    let result;
-    try {
-      const user = await getUser(req);
-      const axiosInstance = axios.create({
-        baseURL: "https://api.digitalocean.com/v2",
-        headers: {
-          Authorization: `Bearer ${user.doToken}`,
-        },
-      });
-      result = await func(axiosInstance, user.server);
-    } catch (e) {
-      console.log("Request failed");
-      console.error(e);
-      return res.status(500).send();
-    }
-    return res.status(result.code).send(result.result);
+  const doRequest = async (req: Request) => {
+    const user = await getUser(req);
+    const axiosInstance = axios.create({
+      baseURL: "https://api.digitalocean.com/v2",
+      headers: {
+        Authorization: `Bearer ${user.doToken}`,
+      },
+    });
+    return await func(axiosInstance, user.server);
   };
+
+  return tryCatchHelper(doRequest);
 };
