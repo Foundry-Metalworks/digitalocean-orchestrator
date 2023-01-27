@@ -1,6 +1,7 @@
-import { AxiosInstance } from "axios";
+import axios, { AxiosInstance } from "axios";
 import mapper from "./mapper/droplets";
 import { get, post, remove } from "../util/axios";
+import dns from "dns";
 
 const dropletBaseUrl = "droplets";
 const dropletUrl = (id: string) => `droplets/${id}`;
@@ -136,9 +137,29 @@ const startDroplet = async (
   return { id };
 };
 
+const getFriendlyIP = async (subdomain: string, ip: string) => {
+  const url = `${subdomain}.${process.env.DOMAIN_NAME}`;
+  try {
+    const dnsIp = await new Promise((resolve, reject) => {
+      dns.lookup(url, { family: 4 }, (err, address) => {
+        if (err) reject(err);
+        resolve(address);
+      });
+    });
+    if (dnsIp == ip) {
+      const reachable = await get(axios, `https://${url}`, { method: "HEAD" });
+      if (reachable.status == 302 || reachable.status == 200) {
+        return { ip: `https://${url}` };
+      }
+    }
+  } catch (e) {
+    console.error(e);
+  }
+  return { ip: `http://${ip}:3000` };
+};
+
 const getDropletIP = async (axios: AxiosInstance, id: string) => {
   const result = await get(axios, dropletUrl(id));
-
   return mapper.fromIPResponse(result.data);
 };
 
@@ -150,4 +171,5 @@ export default {
   deleteDroplet,
   startDroplet,
   getDropletIP,
+  getFriendlyIP,
 };

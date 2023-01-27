@@ -42,7 +42,11 @@ const onStartRequest = digitalOceanHelper(async (axios, subdomain) => {
 const onIPRequest = digitalOceanHelper(async (axios, subdomain) => {
   const id = await dropletService.getDropletId(axios, subdomain);
   const result = await dropletService.getDropletIP(axios, id.id);
-  return { code: 200, result };
+  const friendlyResult = await dropletService.getFriendlyIP(
+    subdomain,
+    result.ip
+  );
+  return { code: 200, result: friendlyResult };
 });
 
 export default {

@@ -5,10 +5,10 @@ import { validationResult } from "express-validator";
 import { getUser } from "./auth";
 import { Client } from "pg";
 
-export type RouteResult = {
+export interface RouteResult {
   code: number;
   result?: unknown;
-};
+}
 
 export const validationHelper = (
   req: Request,
