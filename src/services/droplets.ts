@@ -8,6 +8,7 @@ const dropletUrl = (id: string) => `droplets/${id}`;
 const dropletActionUrl = (id: string) => `droplets/${id}/actions`;
 
 const getSetupScript = (name: string) => `#!/bin/bash
+cd /root/
 curl -sL https://deb.nodesource.com/setup_18.x | sudo bash -
 sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https
 curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
