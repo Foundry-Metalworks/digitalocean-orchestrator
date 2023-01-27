@@ -46,7 +46,7 @@ const onIPRequest = digitalOceanHelper(async (axios, subdomain) => {
     subdomain,
     result.ip
   );
-  return { code: 200, result: friendlyResult };
+  return { code: 200, friendlyResult };
 });
 
 export default {

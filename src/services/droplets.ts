@@ -8,7 +8,6 @@ const dropletUrl = (id: string) => `droplets/${id}`;
 const dropletActionUrl = (id: string) => `droplets/${id}/actions`;
 
 const getSetupScript = (name: string) => `#!/bin/bash
-cd /root/
 curl -sL https://deb.nodesource.com/setup_18.x | sudo bash -
 sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https
 curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
@@ -139,7 +138,7 @@ const startDroplet = async (
 };
 
 const getFriendlyIP = async (subdomain: string, ip: string) => {
-  const url = `${subdomain}.${process.env.DOMAIN_NAME}`;
+  const url = `https://${subdomain}.${process.env.DOMAIN_NAME}`;
   try {
     const dnsIp = await new Promise((resolve, reject) => {
       dns.lookup(url, { family: 4 }, (err, address) => {
@@ -148,9 +147,9 @@ const getFriendlyIP = async (subdomain: string, ip: string) => {
       });
     });
     if (dnsIp == ip) {
-      const reachable = await get(axios, `https://${url}`, { method: "HEAD" });
+      const reachable = await get(axios, url, { method: "HEAD" });
       if (reachable.status == 302 || reachable.status == 200) {
-        return { ip: `https://${url}` };
+        return { ip: url };
       }
     }
   } catch (e) {
