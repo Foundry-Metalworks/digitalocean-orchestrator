@@ -1,7 +1,10 @@
 {
   "name": "metalworks-orchestrator",
   "type": "commonjs",
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "engines": {
+    "node": "18.x"
+  },
   "scripts": {
     "build": "npx tsc",
     "lint": "npx eslint --ext .ts --fix src/",
@@ -38,7 +41,6 @@
     "@typescript-eslint/eslint-plugin": "^5.38.1",
     "@typescript-eslint/parser": "^5.38.1",
     "eslint": "^7.32.0",
-    "eslint-plugin-node": "^11.1.0",
     "husky": "^8.0.1",
     "lint-staged": "^13.0.3",
     "nodemon": "^2.0.20",
