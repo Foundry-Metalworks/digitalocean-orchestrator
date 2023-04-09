@@ -5,7 +5,7 @@ import express from "express";
 
 const routes = express.Router();
 
-routes.get("/exists", serverController.userHasServer);
+routes.get("/setup", serverController.isUserSetup);
 routes.get("/", serverController.getUserServer);
 routes.post(
   "/",

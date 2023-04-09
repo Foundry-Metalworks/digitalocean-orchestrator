@@ -1,10 +1,11 @@
-import express from "express";
+import express, { NextFunction, Request } from "express";
 import cors from "cors";
 import * as dotenv from "dotenv";
-import doRoutes from "./routes/digitalocean";
+import doRoutes from "./routes/instance";
 import serverRoutes from "./routes/server";
 import userRoutes from "./routes/user";
-import { auth } from "express-oauth2-jwt-bearer";
+import { ClerkExpressRequireAuth } from "@clerk/clerk-sdk-node";
+import * as process from "process";
 dotenv.config();
 
 const app = express();
@@ -14,15 +15,17 @@ const isDevelopment = process.env.NODE_ENV == "development";
 // cors
 app.use(
   cors({
-    origin: isDevelopment ? "http://127.0.0.1:5173" : "https://dnd.t2pellet.me",
+    origin: isDevelopment
+      ? "http://localhost:3000"
+      : `https://${process.env.DOMAIN_NAME}`,
   })
 );
-app.use(
-  auth({
-    audience: process.env.AUDIENCE_URL,
-    issuerBaseURL: process.env.ISSUER_URL,
-  })
-);
+
+// auth
+app.use(ClerkExpressRequireAuth());
+
+// data
+app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 app.use("/api/instance", doRoutes);

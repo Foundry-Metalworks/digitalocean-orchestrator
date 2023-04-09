@@ -1,23 +1,19 @@
 import mapper from "./mapper/users";
 import { Client } from "pg";
 
-export const getForUser = async (client: Client, email: string) => {
+export const getForUser = async (client: Client, id: string) => {
   const queryStr = `
   SELECT server FROM users
-  WHERE email = '${email}'
+  WHERE id = '${id}'
   `;
   const result = await client.query(queryStr);
   return mapper.fromGetResponse(result.rows);
 };
 
-export const setForUser = async (
-  client: Client,
-  email: string,
-  name: string
-) => {
+export const setForUser = async (client: Client, id: string, name: string) => {
   const queryStr = `
-  INSERT into users (email, server)
-  VALUES ('${email}', '${name}')
+  INSERT into users (id, server)
+  VALUES ('${id}', '${name}')
   `;
   const result = await client.query(queryStr);
   return result.rowCount > 0;

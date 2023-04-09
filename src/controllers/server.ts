@@ -3,7 +3,16 @@ import serverService from "../services/servers";
 import { databaseHelper } from "../util/controller";
 import { Client } from "pg";
 
-export const setServerTokens = databaseHelper(
+export const checkServerExists = databaseHelper(
+  async (req: Request, client: Client) => {
+    const name = req.params.name;
+    const result = await serverService.checkForServer(client, name);
+    console.log("exists: " + JSON.stringify(result));
+    return { code: 200, result };
+  }
+);
+
+export const setServerInfo = databaseHelper(
   async (req: Request, client: Client) => {
     const name = req.body.name;
     const doToken = req.body.doToken;
@@ -12,15 +21,7 @@ export const setServerTokens = databaseHelper(
   }
 );
 
-export const getServerTokens = databaseHelper(
-  async (req: Request, client: Client) => {
-    const name = req.params.name;
-    const result = await serverService.getServer(client, name);
-    return { code: 200, result };
-  }
-);
-
 export default {
-  getServerTokens,
-  setServerTokens,
+  setServerInfo,
+  checkServerExists,
 };

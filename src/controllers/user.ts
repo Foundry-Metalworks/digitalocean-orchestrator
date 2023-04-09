@@ -1,36 +1,38 @@
 import { Request } from "express";
-import serverService from "../services/users";
+import userService from "../services/users";
+import serverService from "../services/servers";
 import { databaseHelper } from "../util/controller";
-import { getUser } from "../util/auth";
 import { Client } from "pg";
-
-export const userHasServer = databaseHelper(
-  async (req: Request, client: Client) => {
-    const user = await getUser(req);
-    const result = await serverService.getForUser(client, user.email);
-    return { code: 200, result: result.server != null };
+import { RequireAuthProp } from "@clerk/clerk-sdk-node";
+export const isUserSetup = databaseHelper(
+  async (req: RequireAuthProp<Request>, client: Client) => {
+    const id = req.auth.userId;
+    const { server } = await userService.getForUser(client, id);
+    if (server == null) return { code: 200, result: false };
+    const { isTaken } = await serverService.checkForServer(client, server);
+    return { code: 200, result: isTaken };
   }
 );
 
 export const getUserServer = databaseHelper(
-  async (req: Request, client: Client) => {
-    const user = await getUser(req);
-    const result = await serverService.getForUser(client, user.email);
+  async (req: RequireAuthProp<Request>, client: Client) => {
+    const id = req.auth.userId;
+    const result = await userService.getForUser(client, id);
     return { code: 200, result };
   }
 );
 
 export const setUserServer = databaseHelper(
-  async (req: Request, client: Client) => {
+  async (req: RequireAuthProp<Request>, client: Client) => {
     const name = req.body.server;
-    const user = await getUser(req);
-    const result = await serverService.setForUser(client, user.email, name);
+    const id = req.auth.userId;
+    const result = await userService.setForUser(client, id, name);
     return { code: 200, result };
   }
 );
 
 export default {
-  userHasServer,
+  isUserSetup,
   getUserServer,
   setUserServer,
 };

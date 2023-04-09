@@ -5,7 +5,7 @@ import * as dotenv from "dotenv";
 dotenv.config();
 
 const ok = "ok";
-const domainUrl = `domains/${process.env.DOMAIN_NAME}/records`;
+const domainUrl = `domains/${process.env.BASE_DOMAIN_NAME}/records`;
 const fixAuth = (axios: AxiosInstance) => {
   axios.defaults.headers.common[
     "Authorization"
@@ -26,7 +26,7 @@ const getOrCreateDomainMap = async (
     result = await post(axios, domainUrl, {
       type: "A",
       data: ip,
-      name,
+      name: `${name}.${process.env.SUBDOMAIN_NAME}`,
     });
     return mapper.fromCreateResponse(result.data);
   }

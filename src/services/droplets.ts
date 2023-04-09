@@ -2,12 +2,14 @@ import axios, { AxiosInstance } from "axios";
 import mapper from "./mapper/droplets";
 import { get, post, remove } from "../util/axios";
 import dns from "dns";
+import * as process from "process";
 
 const dropletBaseUrl = "droplets";
 const dropletUrl = (id: string) => `droplets/${id}`;
 const dropletActionUrl = (id: string) => `droplets/${id}/actions`;
 
 const getSetupScript = (name: string) => `#!/bin/bash
+sudo cd /root/
 curl -sL https://deb.nodesource.com/setup_18.x | sudo bash -
 sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https
 curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg
@@ -15,28 +17,28 @@ curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo 
 sudo apt update
 sudo apt install nodejs caddy unzip -y
 sudo npm install pm2 -g
-pm2 startup
 mkdir /root/foundry
+mkdir -p /root/foundryuserdata
 wget --output-document /root/foundry/foundryvtt.zip "${process.env.FOUNDRY_URL}"
 unzip /root/foundry/foundryvtt.zip -d /root/foundry/
 rm /root/foundry/foundryvtt.zip
-mkdir -p /root/foundryuserdata
 read -r -d '' CADDY << END1
-${name}.t2pellet.me {
+${name}.${process.env.DOMAIN_NAME} {
     reverse_proxy localhost:30000
     encode zstd gzip
 }
 END1
 echo "$CADDY" > "/etc/caddy/Caddyfile"
 sudo service caddy restart
-pm2 start "node /root/foundry/resources/app/main.js --dataPath=/root/foundryuserdata" --name foundry
-pm2 save
+sudo pm2 startup --hp /root/
+sudo pm2 start "node /root/foundry/resources/app/main.js --dataPath=/root/foundryuserdata" --name foundry --hp /root/
+sudo pm2 save --hp /root/
 read -r -d '' USERDATA << END2
 {
-  "datapath": "/root/foundryuserdata",
+  "dataPath": "/root/foundryuserdata",
   "compressStatic": true,
-  "fullscreen" false,
-  "hostname": "${name}.t2pellet.me",
+  "fullscreen": false,
+  "hostname": "${name}.${process.env.DOMAIN_NAME}",
   "language": "en.core",
   "localHostname": null,
   "port": 30000,
@@ -45,22 +47,24 @@ read -r -d '' USERDATA << END2
   "proxySSL": true,
   "routePrefix": null,
   "updateChannel": "stable",
-  "upnp" true,
+  "upnp": true,
   "upnpLeaseDuration": null,
   "awsConfig": null,
+  "passwordSalt": null,
   "sslCert": null,
   "sslKey": null,
   "world": null,
   "serviceConfig": null
 }
 END2
-mkdir -d /root/foundryuserdata/Config
+mkdir -p /root/foundryuserdata/Config
 echo "$USERDATA" > "/root/foundryuserdata/Config/options.json"
-pm2 restart foundry
+sudo pm2 restart foundry
 sudo service caddy restart
 `;
 
 export const getDropletId = async (axios: AxiosInstance, name: string) => {
+  console.log(`${name}.${process.env.DOMAIN_NAME}`);
   const result = await get(axios, dropletBaseUrl, {
     name: `${name}.${process.env.DOMAIN_NAME}`,
   });
@@ -154,8 +158,9 @@ const getFriendlyIP = async (subdomain: string, ip: string) => {
     }
   } catch (e) {
     console.error(e);
+    return { ip: `http://${ip}:30000` };
   }
-  return { ip: `http://${ip}:3000` };
+  return { ip: `http://${ip}:30000` };
 };
 
 const getDropletIP = async (axios: AxiosInstance, id: string) => {

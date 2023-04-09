@@ -16,15 +16,3 @@ export const connect = async () => {
   await client.connect();
   return client;
 };
-
-export const query = async (queryStr: string) => {
-  const client = await connect();
-  try {
-    const { rows } = await client.query(queryStr);
-    await client.end();
-    return rows;
-  } catch (e) {
-    await client.end();
-    throw e;
-  }
-};

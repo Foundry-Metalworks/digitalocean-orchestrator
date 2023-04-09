@@ -28,6 +28,11 @@ export const addServer = async (
   return result.rowCount > 0;
 };
 
+export const checkForServer = async (client: Client, name: string) => {
+  const isTaken = await isNameTaken(client, name);
+  return { server: name, isTaken };
+};
+
 export const getServer = async (client: Client, name: string) => {
   if (!(await isNameTaken(client, name))) {
     return null;
@@ -44,4 +49,5 @@ export const getServer = async (client: Client, name: string) => {
 export default {
   addServer,
   getServer,
+  checkForServer,
 };

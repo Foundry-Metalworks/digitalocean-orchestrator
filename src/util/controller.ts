@@ -1,9 +1,11 @@
-import { NextFunction, Request, Response } from "express";
+import { NextFunction, Request, RequestHandler, Response } from "express";
 import axios, { AxiosInstance } from "axios";
 import { connect } from "./database";
 import { validationResult } from "express-validator";
-import { getUser } from "./auth";
 import { Client } from "pg";
+import { RequireAuthProp } from "@clerk/clerk-sdk-node";
+import { getServer } from "../services/servers";
+import { getForUser } from "../services/users";
 
 export interface RouteResult {
   code: number;
@@ -23,12 +25,12 @@ export const validationHelper = (
 };
 
 export const tryCatchHelper = (
-  func: (req: Request) => Promise<RouteResult>
-) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
+  func: (req: RequireAuthProp<Request>) => Promise<RouteResult>
+): RequestHandler => {
+  return async (req, res, next) => {
     try {
-      const result = await func(req);
-      res.status(result.code).send(result.result);
+      const result = await func(req as RequireAuthProp<Request>);
+      return res.status(result.code).send(result.result);
     } catch (e) {
       next(e);
     }
@@ -36,9 +38,9 @@ export const tryCatchHelper = (
 };
 
 export const databaseHelper = (
-  func: (req: Request, client: Client) => Promise<RouteResult>
-) => {
-  const dbRequest = async (req: Request) => {
+  func: (req: RequireAuthProp<Request>, client: Client) => Promise<RouteResult>
+): RequestHandler => {
+  const dbRequest = async (req: RequireAuthProp<Request>) => {
     const client = await connect();
     try {
       const result = await func(req, client);
@@ -53,19 +55,21 @@ export const databaseHelper = (
   return tryCatchHelper(dbRequest);
 };
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 export const digitalOceanHelper = (
   func: (axios: AxiosInstance, server: string) => Promise<RouteResult>
-) => {
-  const doRequest = async (req: Request) => {
-    const user = await getUser(req);
+): RequestHandler => {
+  const doRequest = async (req: RequireAuthProp<Request>) => {
+    const client = await connect();
+    const { server } = await getForUser(client, req.auth.userId);
+    const doToken = (await getServer(client, server))?.digitalOcean as string;
+
     const axiosInstance = axios.create({
       baseURL: "https://api.digitalocean.com/v2",
       headers: {
-        Authorization: `Bearer ${user.doToken}`,
+        Authorization: `Bearer ${doToken}`,
       },
     });
-    return await func(axiosInstance, user.server);
+    return await func(axiosInstance, server);
   };
 
   return tryCatchHelper(doRequest);
