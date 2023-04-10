@@ -142,18 +142,18 @@ const startDroplet = async (
 };
 
 const getFriendlyIP = async (subdomain: string, ip: string) => {
-  const url = `https://${subdomain}.${process.env.DOMAIN_NAME}`;
   try {
+    const url = `${subdomain}.${process.env.DOMAIN_NAME}`;
     const dnsIp = await new Promise((resolve, reject) => {
-      dns.lookup(url, { family: 4 }, (err, address) => {
+      dns.resolve4(url, (err, addresses) => {
         if (err) reject(err);
-        resolve(address);
+        resolve(addresses[0]);
       });
     });
     if (dnsIp == ip) {
-      const reachable = await axios.head(url);
-      if (reachable.status == 302 || reachable.status == 200) {
-        return { ip: url };
+      const reachable = await axios.head(`https://${url}`);
+      if (reachable.status == 200) {
+        return { ip: `https://${url}` };
       }
     }
   } catch (e) {

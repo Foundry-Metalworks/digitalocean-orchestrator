@@ -26,6 +26,7 @@ const getDomainMap = async (name: string, ip?: string) => {
       params: {
         type: "A",
         data: ip,
+        ttl: 300,
         name: `${name}.${process.env.SUBDOMAIN_NAME}`,
       },
     });
