@@ -1,32 +1,33 @@
-import { AxiosInstance } from "axios";
 import mapper from "./mapper/network";
-import { get, patch, post, remove } from "../util/axios";
 import * as dotenv from "dotenv";
+import axios from "axios";
+import process from "process";
 dotenv.config();
 
 const ok = "ok";
 const domainUrl = `domains/${process.env.BASE_DOMAIN_NAME}/records`;
-const fixAuth = (axios: AxiosInstance) => {
-  axios.defaults.headers.common[
-    "Authorization"
-  ] = `Bearer ${process.env.DO_TOKEN}`;
-};
 
-const getDomainMap = async (
-  axios: AxiosInstance,
-  name: string,
-  ip?: string
-) => {
-  fixAuth(axios);
-  let result = await get(axios, domainUrl, {
-    name: `${name}.${process.env.DOMAIN_NAME}`,
-    type: "A",
+const networkAPI = axios.create({
+  baseURL: "https://api.digitalocean.com/v2",
+  headers: {
+    Authorization: `Bearer ${process.env.DO_TOKEN}`,
+  },
+});
+
+const getDomainMap = async (name: string, ip?: string) => {
+  let result = await networkAPI.get(domainUrl, {
+    params: {
+      name: `${name}.${process.env.DOMAIN_NAME}`,
+      type: "A",
+    },
   });
   if (!!ip && result.data.domain_records.length < 1) {
-    result = await post(axios, domainUrl, {
-      type: "A",
-      data: ip,
-      name: `${name}.${process.env.SUBDOMAIN_NAME}`,
+    result = await networkAPI.post(domainUrl, {
+      params: {
+        type: "A",
+        data: ip,
+        name: `${name}.${process.env.SUBDOMAIN_NAME}`,
+      },
     });
     return mapper.fromCreateResponse(result.data);
   }
@@ -34,30 +35,28 @@ const getDomainMap = async (
   return mapper.fromIdResponse(result.data);
 };
 
-const checkDomain = async (axios: AxiosInstance, name: string) => {
-  fixAuth(axios);
-  const result = await get(axios, domainUrl, { name, type: "A" });
+const checkDomain = async (name: string) => {
+  const params = { name, type: "A" };
+  const result = await networkAPI.get(domainUrl, { params });
   return result.data.domain_records.count <= 0;
 };
 
-const updateDomain = async (axios: AxiosInstance, name: string, ip: string) => {
-  fixAuth(axios);
+const updateDomain = async (name: string, ip: string) => {
   console.log(`updating network mapping for: ${name}`);
-  const { id } = await getDomainMap(axios, name, ip);
-  const data = {
+  const { id } = await getDomainMap(name, ip);
+  const params = {
     type: "A",
     data: ip,
   };
-  await patch(axios, `${domainUrl}/${id}`, data);
+  await networkAPI.patch(`${domainUrl}/${id}`, { params });
   console.log(`updated network mapping`);
   return ok;
 };
 
-const removeDomain = async (axios: AxiosInstance, name: string) => {
-  fixAuth(axios);
+const removeDomain = async (name: string) => {
   console.log(`removing network mapping for: ${name}`);
-  const { id } = await getDomainMap(axios, name);
-  await remove(axios, `${domainUrl}/${id}`);
+  const { id } = await getDomainMap(name);
+  await networkAPI.delete(`${domainUrl}/${id}`);
   console.log("removed network mapping");
   return ok;
 };

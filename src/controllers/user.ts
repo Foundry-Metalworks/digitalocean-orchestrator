@@ -1,10 +1,10 @@
 import { Request } from "express";
 import userService from "../services/users";
 import serverService from "../services/servers";
-import { databaseHelper } from "../util/controller";
+import { databaseHandler } from "../util/controller";
 import { Client } from "pg";
 import { RequireAuthProp } from "@clerk/clerk-sdk-node";
-export const isUserSetup = databaseHelper(
+export const onCheckUserSetup = databaseHandler(
   async (req: RequireAuthProp<Request>, client: Client) => {
     const id = req.auth.userId;
     const { server } = await userService.getForUser(client, id);
@@ -14,7 +14,7 @@ export const isUserSetup = databaseHelper(
   }
 );
 
-export const getUserServer = databaseHelper(
+export const onGetUserServer = databaseHandler(
   async (req: RequireAuthProp<Request>, client: Client) => {
     const id = req.auth.userId;
     const result = await userService.getForUser(client, id);
@@ -22,7 +22,7 @@ export const getUserServer = databaseHelper(
   }
 );
 
-export const setUserServer = databaseHelper(
+export const onSetUserServer = databaseHandler(
   async (req: RequireAuthProp<Request>, client: Client) => {
     const name = req.body.server;
     const id = req.auth.userId;
@@ -32,7 +32,7 @@ export const setUserServer = databaseHelper(
 );
 
 export default {
-  isUserSetup,
-  getUserServer,
-  setUserServer,
+  onCheckUserSetup,
+  onGetUserServer,
+  onSetUserServer,
 };

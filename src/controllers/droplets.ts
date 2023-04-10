@@ -1,9 +1,11 @@
-import dropletService from "../services/droplets";
+import dropletService, { getDropletId } from "../services/droplets";
 import snapshotService from "../services/snapshots";
 import networkService from "../services/network";
-import { digitalOceanHelper } from "../util/controller";
+import { digitalOceanHandler } from "../util/controller";
+import { AxiosInstance } from "axios";
+import service from "../services/snapshots";
 
-const onStatusRequest = digitalOceanHelper(async (axios, subdomain) => {
+const onStatusRequest = digitalOceanHandler(async (axios, subdomain) => {
   let id;
   try {
     id = await dropletService.getDropletId(axios, subdomain);
@@ -17,16 +19,16 @@ const onStatusRequest = digitalOceanHelper(async (axios, subdomain) => {
   };
 });
 
-const onStopRequest = digitalOceanHelper(async (axios, subdomain) => {
+const onStopRequest = digitalOceanHandler(async (axios, subdomain) => {
   const id = await dropletService.getDropletId(axios, subdomain);
   await dropletService.stopDroplet(axios, id.id);
   await snapshotService.takeSnapshot(axios, subdomain, id.id);
   await dropletService.deleteDroplet(axios, id.id);
-  await networkService.removeDomain(axios, subdomain);
+  await networkService.removeDomain(subdomain);
   return { code: 200 };
 });
 
-const onStartRequest = digitalOceanHelper(async (axios, subdomain) => {
+const onStartRequest = digitalOceanHandler(async (axios, subdomain) => {
   const snapshotId = await snapshotService.getSnapshotId(axios, subdomain);
   if (snapshotId == null) console.log("First time setup");
 
@@ -36,11 +38,11 @@ const onStartRequest = digitalOceanHelper(async (axios, subdomain) => {
     snapshotId?.id
   );
   const ip = await dropletService.getDropletIP(axios, result.id);
-  await networkService.updateDomain(axios, subdomain, ip.ip);
+  await networkService.updateDomain(subdomain, ip.ip);
   return { code: 200, result };
 });
 
-const onIPRequest = digitalOceanHelper(async (axios, subdomain) => {
+const onIPRequest = digitalOceanHandler(async (axios, subdomain) => {
   const id = await dropletService.getDropletId(axios, subdomain);
   const result = await dropletService.getDropletIP(axios, id.id);
   const friendlyResult = await dropletService.getFriendlyIP(
@@ -51,9 +53,18 @@ const onIPRequest = digitalOceanHelper(async (axios, subdomain) => {
   return { code: 200, result: friendlyResult };
 });
 
+const onSaveRequest = digitalOceanHandler(
+  async (axios: AxiosInstance, subdomain: string) => {
+    const dropletId = (await getDropletId(axios, subdomain)).id;
+    const result = await service.takeSnapshot(axios, subdomain, dropletId);
+    return { code: 200, result };
+  }
+);
+
 export default {
   onStatusRequest,
   onStopRequest,
   onStartRequest,
   onIPRequest,
+  onSaveRequest,
 };

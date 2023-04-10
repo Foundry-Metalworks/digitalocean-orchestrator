@@ -1,21 +1,21 @@
 import express from "express";
 import { body } from "express-validator";
-import { validationHelper } from "../util/controller";
 import serverController from "../controllers/server";
+import validate from "../middleware/validate";
 
 const routes = express.Router();
 
 routes.get(
   "/:name/exists",
   body("name").isString(),
-  serverController.checkServerExists
+  serverController.onServerCheck
 );
 routes.post(
   "/",
   body("name").isString(),
   body("doToken").isString(),
-  validationHelper,
-  serverController.setServerInfo
+  validate,
+  serverController.onServerSet
 );
 
 export default routes;

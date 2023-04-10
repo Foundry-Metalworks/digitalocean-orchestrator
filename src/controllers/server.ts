@@ -1,9 +1,9 @@
 import { Request } from "express";
 import serverService from "../services/servers";
-import { databaseHelper } from "../util/controller";
+import { databaseHandler } from "../util/controller";
 import { Client } from "pg";
 
-export const checkServerExists = databaseHelper(
+export const onServerCheck = databaseHandler(
   async (req: Request, client: Client) => {
     const name = req.params.name;
     const result = await serverService.checkForServer(client, name);
@@ -12,7 +12,7 @@ export const checkServerExists = databaseHelper(
   }
 );
 
-export const setServerInfo = databaseHelper(
+export const onServerSet = databaseHandler(
   async (req: Request, client: Client) => {
     const name = req.body.name;
     const doToken = req.body.doToken;
@@ -22,6 +22,6 @@ export const setServerInfo = databaseHelper(
 );
 
 export default {
-  setServerInfo,
-  checkServerExists,
+  onServerSet,
+  onServerCheck,
 };

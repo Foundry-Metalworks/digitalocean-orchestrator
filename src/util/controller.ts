@@ -1,7 +1,6 @@
-import { NextFunction, Request, RequestHandler, Response } from "express";
+import { Request, RequestHandler } from "express";
 import axios, { AxiosInstance } from "axios";
 import { connect } from "./database";
-import { validationResult } from "express-validator";
 import { Client } from "pg";
 import { RequireAuthProp } from "@clerk/clerk-sdk-node";
 import { getServer } from "../services/servers";
@@ -12,19 +11,7 @@ export interface RouteResult {
   result?: unknown;
 }
 
-export const validationHelper = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).send({ errors: errors.array() });
-  }
-  return next();
-};
-
-export const tryCatchHelper = (
+export const tryCatchHandler = (
   func: (req: RequireAuthProp<Request>) => Promise<RouteResult>
 ): RequestHandler => {
   return async (req, res, next) => {
@@ -37,7 +24,7 @@ export const tryCatchHelper = (
   };
 };
 
-export const databaseHelper = (
+export const databaseHandler = (
   func: (req: RequireAuthProp<Request>, client: Client) => Promise<RouteResult>
 ): RequestHandler => {
   const dbRequest = async (req: RequireAuthProp<Request>) => {
@@ -52,10 +39,10 @@ export const databaseHelper = (
     }
   };
 
-  return tryCatchHelper(dbRequest);
+  return tryCatchHandler(dbRequest);
 };
 
-export const digitalOceanHelper = (
+export const digitalOceanHandler = (
   func: (axios: AxiosInstance, server: string) => Promise<RouteResult>
 ): RequestHandler => {
   const doRequest = async (req: RequireAuthProp<Request>) => {
@@ -72,5 +59,5 @@ export const digitalOceanHelper = (
     return await func(axiosInstance, server);
   };
 
-  return tryCatchHelper(doRequest);
+  return tryCatchHandler(doRequest);
 };

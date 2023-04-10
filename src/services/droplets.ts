@@ -1,6 +1,5 @@
 import axios, { AxiosInstance } from "axios";
 import mapper from "./mapper/droplets";
-import { get, post, remove } from "../util/axios";
 import dns from "dns";
 import * as process from "process";
 
@@ -64,22 +63,22 @@ sudo service caddy restart
 `;
 
 export const getDropletId = async (axios: AxiosInstance, name: string) => {
-  console.log(`${name}.${process.env.DOMAIN_NAME}`);
-  const result = await get(axios, dropletBaseUrl, {
-    name: `${name}.${process.env.DOMAIN_NAME}`,
-  });
+  const params = { name: `${name}.${process.env.DOMAIN_NAME}` };
+  const result = await axios.get(dropletBaseUrl, { params });
 
   return mapper.fromIdResponse(result.data);
 };
 
 const getDropletStatus = async (axios: AxiosInstance, id: string) => {
-  const result = await get(axios, dropletUrl(id));
+  const result = await axios.get(dropletUrl(id));
 
   return mapper.fromStatusResponse(result.data);
 };
 
 const killDroplet = async (axios: AxiosInstance, id: string) => {
-  await post(axios, dropletActionUrl(id), { type: "power_off" });
+  console.log(`killing droplet with id: ${id}`);
+  const params = { type: "power_off" };
+  await axios.post(dropletActionUrl(id), { params });
   console.log(`killed droplet with id: ${id}`);
 };
 
@@ -99,13 +98,14 @@ const waitForStopped = async (axios: AxiosInstance, id: string) => {
 
 const deleteDroplet = async (axios: AxiosInstance, id: string) => {
   console.log("Deleting droplet with id: " + id);
-  await remove(axios, dropletUrl(id));
+  await axios.delete(dropletUrl(id));
   console.log("Deleted droplet with id: " + id);
 };
 
 const stopDroplet = async (axios: AxiosInstance, id: string) => {
   console.log(`stopping droplet with id: ${id}`);
-  await post(axios, dropletActionUrl(id), { type: "shutdown" });
+  const params = { type: "shutdown" };
+  await axios.post(dropletActionUrl(id), { params });
   await waitForStopped(axios, id);
   console.log(`stopped droplet with id: ${id}`);
 };
@@ -125,7 +125,7 @@ const startDroplet = async (
   snapshotId?: string
 ) => {
   console.log(`starting droplet from snapshot id: ${snapshotId}`);
-  const data = {
+  const params = {
     name: `${name}.${process.env.DOMAIN_NAME}`,
     region: "tor1",
     size: "s-1vcpu-1gb",
@@ -133,7 +133,7 @@ const startDroplet = async (
     image: snapshotId || "ubuntu-20-04-x64",
     user_data: snapshotId == null ? getSetupScript(name) : "",
   };
-  const result = await post(axios, dropletBaseUrl, data);
+  const result = await axios.post(dropletBaseUrl, { params });
   const id = result.data.droplet.id;
   await waitForStarted(axios, id);
   console.log(`started droplet with id: ${id}`);
@@ -151,7 +151,7 @@ const getFriendlyIP = async (subdomain: string, ip: string) => {
       });
     });
     if (dnsIp == ip) {
-      const reachable = await get(axios, url, { method: "HEAD" });
+      const reachable = await axios.head(url);
       if (reachable.status == 302 || reachable.status == 200) {
         return { ip: url };
       }
@@ -164,7 +164,7 @@ const getFriendlyIP = async (subdomain: string, ip: string) => {
 };
 
 const getDropletIP = async (axios: AxiosInstance, id: string) => {
-  const result = await get(axios, dropletUrl(id));
+  const result = await axios.get(dropletUrl(id));
   return mapper.fromIPResponse(result.data);
 };
 
