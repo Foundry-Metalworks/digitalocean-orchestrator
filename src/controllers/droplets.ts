@@ -22,6 +22,7 @@ const onStopRequest = digitalOceanHelper(async (axios, subdomain) => {
   await dropletService.stopDroplet(axios, id.id);
   await snapshotService.takeSnapshot(axios, subdomain, id.id);
   await dropletService.deleteDroplet(axios, id.id);
+  await networkService.removeDomain(axios, subdomain);
   return { code: 200 };
 });
 
@@ -35,7 +36,7 @@ const onStartRequest = digitalOceanHelper(async (axios, subdomain) => {
     snapshotId?.id
   );
   const ip = await dropletService.getDropletIP(axios, result.id);
-  await networkService.updateDomain(axios, subdomain, result.id, ip.ip);
+  await networkService.updateDomain(axios, subdomain, ip.ip);
   return { code: 200, result };
 });
 
