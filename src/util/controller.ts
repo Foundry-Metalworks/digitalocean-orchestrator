@@ -19,6 +19,7 @@ export const tryCatchHandler = (
       const result = await func(req as RequireAuthProp<Request>);
       return res.status(result.code).send(result.result);
     } catch (e) {
+      console.error(e);
       return res.status(500).send({ error: JSON.stringify(e) });
     }
   };
