@@ -14,12 +14,12 @@ export interface RouteResult {
 export const tryCatchHandler = (
   func: (req: RequireAuthProp<Request>) => Promise<RouteResult>
 ): RequestHandler => {
-  return async (req, res, next) => {
+  return async (req, res) => {
     try {
       const result = await func(req as RequireAuthProp<Request>);
       return res.status(result.code).send(result.result);
     } catch (e) {
-      next(e);
+      return res.status(500).send({ error: JSON.stringify(e) });
     }
   };
 };

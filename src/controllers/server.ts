@@ -1,27 +1,95 @@
-import { Request } from "express";
 import serverService from "../services/servers";
+import userService from "../services/users";
+import tokenService from "../services/token";
 import { databaseHandler } from "../util/controller";
-import { Client } from "pg";
 
-export const onServerCheck = databaseHandler(
-  async (req: Request, client: Client) => {
-    const name = req.params.name;
-    const result = await serverService.checkForServer(client, name);
-    console.log("exists: " + JSON.stringify(result));
-    return { code: 200, result };
-  }
-);
+export const onServerGet = databaseHandler(async (req, client) => {
+  const id = req.auth.userId;
+  const result = await userService.getForUser(client, id);
+  return { code: 200, result };
+});
 
-export const onServerSet = databaseHandler(
-  async (req: Request, client: Client) => {
-    const name = req.body.name;
-    const doToken = req.body.doToken;
-    const result = await serverService.addServer(client, name, doToken);
-    return { code: result ? 200 : 400 };
+export const onServerCreate = databaseHandler(async (req, client) => {
+  const name = req.body.name;
+  const doToken = req.body.doApiToken;
+  const id = req.auth.userId;
+  const serverExists = await serverService.doesServerExist(client, name);
+  if (serverExists) {
+    return {
+      code: 400,
+      result: {
+        error: `Server already exists: ${name}`,
+      },
+    };
   }
-);
+  const { server: userServer } = await userService.getForUser(client, id);
+  if (userServer) {
+    return {
+      code: 400,
+      result: { error: `User already in a server: ${userServer}` },
+    };
+  }
+  const addServerResult = await serverService.addServer(client, name, doToken);
+  const inviteUserResult = await serverService.addUser(client, name, id);
+  const addUserResult = await userService.addUser(client, id, name);
+  return {
+    code: addServerResult && inviteUserResult && addUserResult ? 200 : 500,
+  };
+});
+
+export const onServerJoin = databaseHandler(async (req, client) => {
+  const id = req.auth.userId;
+  const inviteToken = req.body.inviteToken;
+  const server = await tokenService.getServerFromToken(inviteToken);
+  if (!server) {
+    return {
+      code: 400,
+      result: { error: "Token is not valid. Did it expire?" },
+    };
+  }
+  const serverExists = await serverService.doesServerExist(client, server);
+  if (!serverExists) {
+    return {
+      code: 500,
+      result: {
+        error:
+          "Something went really bad. The token is associated with a server but the server doesn't exist",
+      },
+    };
+  }
+  const { server: userServer } = await userService.getForUser(client, id);
+  if (userServer) {
+    return {
+      code: 400,
+      result: { error: `User already in a server: ${userServer}` },
+    };
+  }
+  const inviteUserResult = await serverService.addUser(client, server, id);
+  const addUserResult = await userService.addUser(client, id, server);
+  return {
+    code: inviteUserResult && addUserResult ? 200 : 500,
+    result: { server },
+  };
+});
+
+export const onTokenGet = databaseHandler(async (req, client) => {
+  const id = req.auth.userId;
+  const { server } = await userService.getForUser(client, id);
+  if (!server) return { code: 400, result: { error: `User not set up` } };
+  const result = tokenService.generateToken(server);
+  return { code: 200, result };
+});
+
+export const onCheckForServer = databaseHandler(async (req, client) => {
+  const name = req.params.name;
+  const result = !!(await serverService.getServer(client, name));
+  return { code: 200, result };
+});
 
 export default {
-  onServerSet,
-  onServerCheck,
+  onServerCreate,
+  onServerJoin,
+  onServerGet,
+  onTokenGet,
+  onCheckForServer,
 };
