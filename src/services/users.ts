@@ -6,7 +6,9 @@ export const getForUser = async (client: Client, id: string) => {
   SELECT server FROM users
   WHERE id = '${id}'
   `;
+  console.log("querying for user with id: " + id);
   const result = await client.query(queryStr);
+  console.log("got response: " + JSON.stringify(result));
   return mapper.fromGetResponse(result.rows);
 };
 

@@ -39,6 +39,7 @@ app.use("/api/server", serverRoutes);
 
 //error handler
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  console.log("err:\n" + err.stack);
   if (res.headersSent) {
     return next(err);
   }

@@ -11,17 +11,12 @@ export interface RouteResult {
   result?: unknown;
 }
 
-export const tryCatchHandler = (
+export const routeHandler = (
   func: (req: RequireAuthProp<Request>) => Promise<RouteResult>
 ): RequestHandler => {
   return async (req, res) => {
-    try {
-      const result = await func(req as RequireAuthProp<Request>);
-      return res.status(result.code).send(result.result);
-    } catch (e) {
-      console.error(e);
-      return res.status(500).send({ error: JSON.stringify(e) });
-    }
+    const result = await func(req as RequireAuthProp<Request>);
+    return res.status(result.code).send(result.result);
   };
 };
 
@@ -40,7 +35,7 @@ export const databaseHandler = (
     }
   };
 
-  return tryCatchHandler(dbRequest);
+  return routeHandler(dbRequest);
 };
 
 export const digitalOceanHandler = (
@@ -60,5 +55,5 @@ export const digitalOceanHandler = (
     return await func(axiosInstance, server);
   };
 
-  return tryCatchHandler(doRequest);
+  return routeHandler(doRequest);
 };
