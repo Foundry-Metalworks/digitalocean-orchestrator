@@ -9,13 +9,13 @@ routes.get("/", serverController.onServerGet);
 routes.get("/token", serverController.onTokenGet);
 routes.get(
   "/:name/exists",
-  param("name").isString(),
+  param("name").isAlpha(),
   validate,
   serverController.onCheckForServer
 );
 routes.post(
   "/create",
-  body("name").isString(),
+  body("name").isAlpha(),
   body("doApiToken").isString(),
   validate,
   serverController.onServerCreate

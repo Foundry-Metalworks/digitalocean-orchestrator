@@ -1,4 +1,4 @@
-import express from "express";
+import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import * as dotenv from "dotenv";
 import doRoutes from "./routes/instance";
@@ -21,7 +21,14 @@ app.use(
 );
 
 // auth
-app.use(ClerkExpressRequireAuth());
+app.use(
+  ClerkExpressRequireAuth({
+    onError: (err) => {
+      err.status = 401;
+      return err;
+    },
+  })
+);
 
 // data
 app.use(express.urlencoded({ extended: false }));
@@ -30,6 +37,17 @@ app.use(express.json());
 app.use("/api/instance", doRoutes);
 app.use("/api/server", serverRoutes);
 
+//error handler
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+  if (res.headersSent) {
+    return next(err);
+  }
+  if (err.message == "Unauthenticated") res.status(401);
+  else res.status(500);
+  res.send({ error: { message: err.message, stack: err.stack } });
+});
+
+// start
 app.disable("etag");
 app.listen(PORT, () => {
   console.log(`[server]: metalworks-orchestrator is running at port ${PORT}`);
