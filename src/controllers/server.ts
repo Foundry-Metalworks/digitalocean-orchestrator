@@ -13,7 +13,11 @@ export const onServerCreate = databaseHandler(async (req, client) => {
   const name = req.body.name;
   const doToken = req.body.doApiToken;
   const id = req.auth.userId;
+  console.log(
+    `creating server: ${name} with token: ${doToken} for user: ${id}`
+  );
   const serverExists = await serverService.doesServerExist(client, name);
+  console.log("exists: " + serverExists);
   if (serverExists) {
     return {
       code: 400,
@@ -23,15 +27,20 @@ export const onServerCreate = databaseHandler(async (req, client) => {
     };
   }
   const { server: userServer } = await userService.getForUser(client, id);
+  console.log("userServer: " + userServer);
   if (userServer) {
     return {
       code: 400,
       result: { error: `User already in a server: ${userServer}` },
     };
   }
+  console.log("adding server");
   const addServerResult = await serverService.addServer(client, name, doToken);
+  console.log("inviting user to server");
   const inviteUserResult = await serverService.addUser(client, name, id);
+  console.log("adding user");
   const addUserResult = await userService.addUser(client, id, name);
+  console.log("completed");
   return {
     code: addServerResult && inviteUserResult && addUserResult ? 200 : 500,
   };
