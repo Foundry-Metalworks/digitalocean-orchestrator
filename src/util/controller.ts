@@ -15,8 +15,12 @@ export const routeHandler = (
   func: (req: RequireAuthProp<Request>) => Promise<RouteResult>
 ): RequestHandler => {
   return async (req, res) => {
-    const result = await func(req as RequireAuthProp<Request>);
-    return res.status(result.code).send(result.result);
+    try {
+      const result = await func(req as RequireAuthProp<Request>);
+      return res.status(result.code).send(result.result);
+    } catch (e) {
+      return res.status(500).send({ error: JSON.stringify(e) });
+    }
   };
 };
 
