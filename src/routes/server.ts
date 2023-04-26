@@ -27,5 +27,11 @@ routes.post(
   validate,
   serverController.onServerJoin
 );
+routes.post(
+  "/invite",
+  body("email").isEmail(),
+  validate,
+  serverController.onServerInvite
+);
 
 export default routes;

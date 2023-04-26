@@ -1,11 +1,25 @@
 import serverService from "../services/servers";
 import userService from "../services/users";
 import tokenService from "../services/token";
+import inviteService from "../services/invite";
 import { databaseHandler } from "../util/controller";
+import { clerkClient } from "@clerk/clerk-sdk-node";
 
 export const onServerGet = databaseHandler(async (req, client) => {
   const id = req.auth.userId;
   const result = await userService.getForUser(client, id);
+  if (!result.server) {
+    const user = await clerkClient.users.getUser(id);
+    const email = user.emailAddresses[0].emailAddress;
+    const server = await inviteService.getForEmail(client, email);
+    if (server) {
+      await inviteService.removeEmail(client, email);
+      const inviteUserResult = await serverService.addUser(client, server, id);
+      const addUserResult = await userService.addUser(client, id, server);
+      const isSuccess = inviteUserResult && addUserResult;
+      return { code: isSuccess ? 200 : 400, result: { server } };
+    }
+  }
   return { code: 200, result };
 });
 
@@ -81,6 +95,18 @@ export const onServerJoin = databaseHandler(async (req, client) => {
   };
 });
 
+export const onServerInvite = databaseHandler(async (req, client) => {
+  const email = req.body.email;
+  const id = req.auth.userId;
+  const { server } = await userService.getForUser(client, id);
+  if (!server) return { code: 400, result: { error: "User not set up" } };
+  await clerkClient.invitations.createInvitation({
+    emailAddress: email,
+  });
+  const inviteResult = await inviteService.addEmail(client, server, email);
+  return { code: inviteResult ? 200 : 500 };
+});
+
 export const onTokenGet = databaseHandler(async (req, client) => {
   const id = req.auth.userId;
   const { server } = await userService.getForUser(client, id);
@@ -114,6 +140,7 @@ export const onCheckForServer = databaseHandler(async (req, client) => {
 export default {
   onServerCreate,
   onServerJoin,
+  onServerInvite,
   onServerGet,
   onTokenGet,
   onLinkGet,
