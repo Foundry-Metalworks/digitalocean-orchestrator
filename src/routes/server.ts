@@ -7,6 +7,7 @@ const routes = express.Router();
 
 routes.get("/", serverController.onServerGet);
 routes.get("/token", serverController.onTokenGet);
+routes.get("/link", serverController.onLinkGet);
 routes.get(
   "/:name/exists",
   param("name").isAlpha(),

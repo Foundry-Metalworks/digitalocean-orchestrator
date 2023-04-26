@@ -49,7 +49,7 @@ export const onServerCreate = databaseHandler(async (req, client) => {
 export const onServerJoin = databaseHandler(async (req, client) => {
   const id = req.auth.userId;
   const inviteToken = req.body.inviteToken;
-  const server = await tokenService.getServerFromToken(inviteToken);
+  const server = await tokenService.getServerFromToken(client, inviteToken);
   if (!server) {
     return {
       code: 400,
@@ -89,6 +89,22 @@ export const onTokenGet = databaseHandler(async (req, client) => {
   return { code: 200, result };
 });
 
+export const onLinkGet = databaseHandler(async (req, client) => {
+  const id = req.auth.userId;
+  const { server } = await userService.getForUser(client, id);
+  if (!server) return { code: 400, result: { error: "User not set up" } };
+  const result = await tokenService.generateSingleUseToken(client, server);
+  if (result) {
+    return {
+      code: 200,
+      result: {
+        link: `https://${process.env.DOMAIN_NAME}/join/${result.token}`,
+      },
+    };
+  }
+  return { code: 500, result: { error: "Failed to generate link token" } };
+});
+
 export const onCheckForServer = databaseHandler(async (req, client) => {
   const name = req.params.name;
   const result = !!(await serverService.getServer(client, name));
@@ -100,5 +116,6 @@ export default {
   onServerJoin,
   onServerGet,
   onTokenGet,
+  onLinkGet,
   onCheckForServer,
 };
