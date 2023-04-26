@@ -100,9 +100,26 @@ export const onServerInvite = databaseHandler(async (req, client) => {
   const id = req.auth.userId;
   const { server } = await userService.getForUser(client, id);
   if (!server) return { code: 400, result: { error: "User not set up" } };
-  await clerkClient.invitations.createInvitation({
-    emailAddress: email,
-  });
+  // Account invite if no account
+  const count = await clerkClient.users.getCount({ emailAddress: [email] });
+  if (!count) {
+    await clerkClient.invitations.createInvitation({
+      emailAddress: email,
+    });
+  } else {
+    // Don't invite if already in a server
+    const user = (
+      await clerkClient.users.getUserList({ emailAddress: [email] })
+    )[0];
+    const { server: userServer } = await userService.getForUser(
+      client,
+      user.id
+    );
+    if (userServer) {
+      return { code: 400, result: { error: "Invited E-Mail already set up" } };
+    }
+  }
+  // Server invite
   const inviteResult = await inviteService.addEmail(client, server, email);
   return { code: inviteResult ? 200 : 500 };
 });
