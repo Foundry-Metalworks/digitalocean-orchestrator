@@ -5,18 +5,23 @@ export const addEmail = async (
   server: string,
   email: string
 ) => {
-  const queryStr = `
-  INSERT INTO invites (email, server)
-  VALUES('${email}', '${server}')
-  `;
+  const servers = await getForEmail(client, email);
+  if (!!servers && servers.includes(server)) return true;
+  const queryStr =
+    servers != null
+      ? `UPDATE invites SET servers=ARRAY_APPEND(servers, '${server}') WHERE email = '${email}'`
+      : `INSERT INTO invites (email, servers) VALUES ('${email}', '{${server}}')`;
   const result = await client.query(queryStr);
   return result.rowCount == 1;
 };
 
-export const getForEmail = async (client: Client, email: string) => {
-  const queryStr = `SELECT server FROM invites WHERE email = '${email}'`;
+export const getForEmail = async (
+  client: Client,
+  email: string
+): Promise<string[]> => {
+  const queryStr = `SELECT servers FROM invites WHERE email = '${email}'`;
   const result = await client.query(queryStr);
-  return result.rowCount == 1 ? result.rows[0].server : null;
+  return result.rowCount == 1 ? result.rows[0].servers : [];
 };
 
 export const removeEmail = async (client: Client, email: string) => {

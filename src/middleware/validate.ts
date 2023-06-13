@@ -4,7 +4,11 @@ import { validationResult } from "express-validator";
 const validate = (req: Request, res: Response, next: NextFunction) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(400).send({ errors: errors.array() });
+    return res
+      .status(400)
+      .send({
+        error: { message: "Input failed validation", stack: errors.array() },
+      });
   }
   return next();
 };

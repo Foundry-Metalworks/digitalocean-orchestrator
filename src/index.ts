@@ -1,8 +1,9 @@
 import express, { NextFunction, Request, Response } from "express";
 import cors from "cors";
 import * as dotenv from "dotenv";
-import doRoutes from "./routes/instance";
+import dropletRoutes from "./routes/droplets";
 import serverRoutes from "./routes/server";
+import userRoutes from "./routes/user";
 import { ClerkExpressRequireAuth } from "@clerk/clerk-sdk-node";
 import * as process from "process";
 dotenv.config();
@@ -34,8 +35,9 @@ app.use(
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-app.use("/api/instance", doRoutes);
+app.use("/api/instance", dropletRoutes);
 app.use("/api/server", serverRoutes);
+app.use("/api/user", userRoutes);
 
 //error handler
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

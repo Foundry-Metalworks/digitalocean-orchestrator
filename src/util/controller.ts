@@ -19,7 +19,10 @@ export const routeHandler = (
       const result = await func(req as RequireAuthProp<Request>);
       return res.status(result.code).send(result.result);
     } catch (e) {
-      return res.status(500).send({ error: JSON.stringify(e) });
+      const error = e as Error;
+      return res
+        .status(500)
+        .send({ error: { message: error.message, stack: error.stack } });
     }
   };
 };

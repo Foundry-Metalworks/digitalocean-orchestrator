@@ -4,22 +4,11 @@ import tokenService from "../services/token";
 import inviteService from "../services/invite";
 import { databaseHandler } from "../util/controller";
 import { clerkClient } from "@clerk/clerk-sdk-node";
+import { getUserServer } from "../util/user";
 
 export const onServerGet = databaseHandler(async (req, client) => {
   const id = req.auth.userId;
   const result = await userService.getForUser(client, id);
-  if (!result.server) {
-    const user = await clerkClient.users.getUser(id);
-    const email = user.emailAddresses[0].emailAddress;
-    const server = await inviteService.getForEmail(client, email);
-    if (server) {
-      await inviteService.removeEmail(client, email);
-      const inviteUserResult = await serverService.addUser(client, server, id);
-      const addUserResult = await userService.addUser(client, id, server);
-      const isSuccess = inviteUserResult && addUserResult;
-      return { code: isSuccess ? 200 : 400, result: { server } };
-    }
-  }
   return { code: 200, result };
 });
 
@@ -36,16 +25,8 @@ export const onServerCreate = databaseHandler(async (req, client) => {
     return {
       code: 400,
       result: {
-        error: `Server already exists: ${name}`,
+        error: { message: `Server already exists: ${name}` },
       },
-    };
-  }
-  const { server: userServer } = await userService.getForUser(client, id);
-  console.log("userServer: " + userServer);
-  if (userServer) {
-    return {
-      code: 400,
-      result: { error: `User already in a server: ${userServer}` },
     };
   }
   console.log("adding server");
@@ -67,24 +48,7 @@ export const onServerJoin = databaseHandler(async (req, client) => {
   if (!server) {
     return {
       code: 400,
-      result: { error: "Token is not valid. Did it expire?" },
-    };
-  }
-  const serverExists = await serverService.doesServerExist(client, server);
-  if (!serverExists) {
-    return {
-      code: 500,
-      result: {
-        error:
-          "Something went really bad. The token is associated with a server but the server doesn't exist",
-      },
-    };
-  }
-  const { server: userServer } = await userService.getForUser(client, id);
-  if (userServer) {
-    return {
-      code: 400,
-      result: { error: `User already in a server: ${userServer}` },
+      result: { error: { message: "Token is not valid. Did it expire?" } },
     };
   }
   const inviteUserResult = await serverService.addUser(client, server, id);
@@ -99,7 +63,8 @@ export const onServerInvite = databaseHandler(async (req, client) => {
   const email = req.body.email;
   const id = req.auth.userId;
   const { server } = await userService.getForUser(client, id);
-  if (!server) return { code: 400, result: { error: "User not set up" } };
+  if (!server)
+    return { code: 400, result: { error: { message: "User not set up" } } };
   // Account invite if no account
   const count = await clerkClient.users.getCount({ emailAddress: [email] });
   if (!count) {
@@ -108,15 +73,17 @@ export const onServerInvite = databaseHandler(async (req, client) => {
     });
   } else {
     // Don't invite if already in a server
-    const user = (
+    const { id } = (
       await clerkClient.users.getUserList({ emailAddress: [email] })
     )[0];
-    const { server: userServer } = await userService.getForUser(
-      client,
-      user.id
-    );
+    const userServer = getUserServer(id);
     if (userServer) {
-      return { code: 400, result: { error: "Invited E-Mail already set up" } };
+      return {
+        code: 400,
+        result: {
+          error: { message: `User already in a server: ${userServer}` },
+        },
+      };
     }
   }
   // Server invite
@@ -127,7 +94,6 @@ export const onServerInvite = databaseHandler(async (req, client) => {
 export const onTokenGet = databaseHandler(async (req, client) => {
   const id = req.auth.userId;
   const { server } = await userService.getForUser(client, id);
-  if (!server) return { code: 400, result: { error: `User not set up` } };
   const result = tokenService.generateToken(server);
   return { code: 200, result };
 });
@@ -135,7 +101,6 @@ export const onTokenGet = databaseHandler(async (req, client) => {
 export const onLinkGet = databaseHandler(async (req, client) => {
   const id = req.auth.userId;
   const { server } = await userService.getForUser(client, id);
-  if (!server) return { code: 400, result: { error: "User not set up" } };
   const result = await tokenService.generateSingleUseToken(client, server);
   if (result) {
     return {
@@ -145,7 +110,10 @@ export const onLinkGet = databaseHandler(async (req, client) => {
       },
     };
   }
-  return { code: 500, result: { error: "Failed to generate link token" } };
+  return {
+    code: 500,
+    result: { error: { message: "Failed to generate link token" } },
+  };
 });
 
 export const onCheckForServer = databaseHandler(async (req, client) => {
