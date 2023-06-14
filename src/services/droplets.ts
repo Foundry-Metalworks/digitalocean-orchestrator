@@ -62,14 +62,11 @@ sudo pm2 restart foundry
 sudo service caddy restart
 `;
 
-export const getDropletId = async (axios: AxiosInstance, name: string) => {
-  const params = { name: `${name}.${process.env.DOMAIN_NAME}` };
-  const result = await axios.get(dropletBaseUrl, { params });
+const getDropletStatus = async (axios: AxiosInstance, id?: string) => {
+  if (!id) {
+    return { status: "deleted" };
+  }
 
-  return mapper.fromIdResponse(result.data);
-};
-
-const getDropletStatus = async (axios: AxiosInstance, id: string) => {
   const result = await axios.get(dropletUrl(id));
 
   return mapper.fromStatusResponse(result.data);
@@ -78,7 +75,7 @@ const getDropletStatus = async (axios: AxiosInstance, id: string) => {
 const killDroplet = async (axios: AxiosInstance, id: string) => {
   console.log(`killing droplet with id: ${id}`);
   const params = { type: "power_off" };
-  await axios.post(dropletActionUrl(id), { params });
+  await axios.post(dropletActionUrl(id), params);
   console.log(`killed droplet with id: ${id}`);
 };
 
@@ -105,7 +102,7 @@ const deleteDroplet = async (axios: AxiosInstance, id: string) => {
 const stopDroplet = async (axios: AxiosInstance, id: string) => {
   console.log(`stopping droplet with id: ${id}`);
   const params = { type: "shutdown" };
-  await axios.post(dropletActionUrl(id), { params });
+  await axios.post(dropletActionUrl(id), params);
   await waitForStopped(axios, id);
   console.log(`stopped droplet with id: ${id}`);
 };
@@ -133,10 +130,10 @@ const startDroplet = async (
     image: snapshotId || "ubuntu-20-04-x64",
     user_data: snapshotId == null ? getSetupScript(name) : "",
   };
-  const result = await axios.post(dropletBaseUrl, { params });
+  const result = await axios.post(dropletBaseUrl, params);
   const id = result.data.droplet.id;
-  await waitForStarted(axios, id);
   console.log(`started droplet with id: ${id}`);
+  await waitForStarted(axios, id);
 
   return { id };
 };
@@ -147,7 +144,7 @@ const getFriendlyIP = async (subdomain: string, ip: string) => {
     const dnsIp = await new Promise((resolve, reject) => {
       dns.resolve4(url, (err, addresses) => {
         if (err) reject(err);
-        resolve(addresses[0]);
+        addresses?.length ? resolve(addresses[0]) : resolve(null);
       });
     });
     if (dnsIp == ip) {
@@ -169,7 +166,6 @@ const getDropletIP = async (axios: AxiosInstance, id: string) => {
 };
 
 export default {
-  getDropletId,
   getDropletStatus,
   killDroplet,
   stopDroplet,

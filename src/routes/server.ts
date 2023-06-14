@@ -7,14 +7,23 @@ import { requiresNewUser, requiresSetupUser } from "../middleware/user";
 const routes = express.Router();
 
 routes.get("/", serverController.onServerGet);
-routes.get("/token", requiresSetupUser, serverController.onTokenGet);
-routes.get("/link", requiresSetupUser, serverController.onLinkGet);
 routes.get(
   "/:name/exists",
   param("name").isAlpha(),
   validate,
   serverController.onCheckForServer
 );
+
+routes.get("/token", requiresSetupUser, serverController.onTokenGet);
+routes.get("/link", requiresSetupUser, serverController.onLinkGet);
+routes.post(
+  "/invite",
+  body("email").isEmail(),
+  validate,
+  requiresSetupUser,
+  serverController.onServerInvite
+);
+
 routes.post(
   "/create",
   body("name").isAlpha(),
@@ -29,13 +38,6 @@ routes.post(
   validate,
   requiresNewUser,
   serverController.onServerJoin
-);
-routes.post(
-  "/invite",
-  body("email").isEmail(),
-  validate,
-  requiresSetupUser,
-  serverController.onServerInvite
 );
 
 export default routes;

@@ -23,12 +23,10 @@ const getDomainMap = async (name: string, ip?: string) => {
   });
   if (!!ip && result.data.domain_records.length < 1) {
     result = await networkAPI.post(domainUrl, {
-      params: {
-        type: "A",
-        data: ip,
-        ttl: 300,
-        name: `${name}.${process.env.SUBDOMAIN_NAME}`,
-      },
+      type: "A",
+      data: ip,
+      ttl: 300,
+      name: `${name}.${process.env.SUBDOMAIN_NAME}`,
     });
     return mapper.fromCreateResponse(result.data);
   }
@@ -49,15 +47,17 @@ const updateDomain = async (name: string, ip: string) => {
     type: "A",
     data: ip,
   };
-  await networkAPI.patch(`${domainUrl}/${id}`, { params });
+  await networkAPI.patch(`${domainUrl}/${id}`, params);
   console.log(`updated network mapping`);
   return ok;
 };
 
 const removeDomain = async (name: string) => {
   console.log(`removing network mapping for: ${name}`);
-  const { id } = await getDomainMap(name);
-  await networkAPI.delete(`${domainUrl}/${id}`);
+  const result = await getDomainMap(name);
+  if (result?.id) {
+    await networkAPI.delete(`${domainUrl}/${result.id}`);
+  }
   console.log("removed network mapping");
   return ok;
 };

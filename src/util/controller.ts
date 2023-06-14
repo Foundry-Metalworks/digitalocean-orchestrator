@@ -1,10 +1,10 @@
 import { Request, RequestHandler } from "express";
-import axios, { AxiosInstance } from "axios";
+import { AxiosInstance } from "axios";
 import { connect } from "./database";
 import { Client } from "pg";
 import { RequireAuthProp } from "@clerk/clerk-sdk-node";
-import { getServer } from "../services/servers";
-import { getForUser } from "../services/users";
+import { getDOAxiosInstance } from "./network";
+import { DOData, DORequest } from "../types";
 
 export interface RouteResult {
   code: number;
@@ -46,20 +46,14 @@ export const databaseHandler = (
 };
 
 export const digitalOceanHandler = (
-  func: (axios: AxiosInstance, server: string) => Promise<RouteResult>
+  func: (axios: AxiosInstance, droplet: DOData) => Promise<RouteResult>
 ): RequestHandler => {
-  const doRequest = async (req: RequireAuthProp<Request>) => {
-    const client = await connect();
-    const { server } = await getForUser(client, req.auth.userId);
-    const doToken = (await getServer(client, server))?.digitalOcean as string;
+  const doRequest = async (req: Request) => {
+    const doRequest = req as DORequest;
+    const { token } = doRequest.droplet;
 
-    const axiosInstance = axios.create({
-      baseURL: "https://api.digitalocean.com/v2",
-      headers: {
-        Authorization: `Bearer ${doToken}`,
-      },
-    });
-    return await func(axiosInstance, server);
+    const axiosInstance = getDOAxiosInstance(token);
+    return await func(axiosInstance, doRequest.droplet);
   };
 
   return routeHandler(doRequest);

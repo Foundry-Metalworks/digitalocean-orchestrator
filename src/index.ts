@@ -6,7 +6,14 @@ import serverRoutes from "./routes/server";
 import userRoutes from "./routes/user";
 import { ClerkExpressRequireAuth } from "@clerk/clerk-sdk-node";
 import * as process from "process";
+import { DOData } from "./types";
 dotenv.config();
+
+declare module "express-serve-static-core" {
+  interface Request {
+    droplet?: DOData;
+  }
+}
 
 const app = express();
 const PORT = process.env.PORT || 3030;

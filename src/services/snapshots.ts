@@ -6,7 +6,10 @@ const actionUrl = (id: string) => `actions/${id}`;
 const dropletActionUrl = (id: string) => `droplets/${id}/actions`;
 const snapshotUrl = (id: string) => `snapshots/${id}`;
 
-const getSnapshotId = async (axios: AxiosInstance, name: string) => {
+const getSnapshotId = async (
+  axios: AxiosInstance,
+  name: string
+): Promise<{ id?: string }> => {
   const params = {
     name: `${name}.${process.env.DOMAIN_NAME}`,
     resource_type: "droplet",
@@ -29,37 +32,30 @@ const takeSnapshot = async (
   name: string,
   dropletId: string
 ) => {
-  const oldSnapshotId = await getSnapshotId(axios, name);
   const params = {
     type: "snapshot",
     name: `${name}.${process.env.DOMAIN_NAME}`,
   };
-  const snapshotResult = await axios.post(dropletActionUrl(dropletId), {
-    params,
-  });
+  const snapshotResult = await axios.post(dropletActionUrl(dropletId), params);
   const actionId = snapshotResult.data.action.id;
 
-  if (oldSnapshotId != null) {
-    await deleteSnapshot(axios, oldSnapshotId.id);
-  }
+  return { success: snapshotResult.status == 201, actionId };
+};
 
-  console.log("Taking snapshot of droplet with id: " + dropletId);
+const waitForSnapshot = async (axios: AxiosInstance, actionId: string) => {
   let status = (await axios.get(actionUrl(actionId))).data.action.status;
   while (status != "completed") {
-    console.log("Waiting for completion, action status currently: " + status);
     if (status == "errored") {
-      throw Error("Failed to take snapshot of droplet with id: " + dropletId);
+      throw Error("Snapshot action failed: " + actionId);
     }
     await new Promise((resolve) => setTimeout(resolve, 5000));
     status = (await axios.get(actionUrl(actionId))).data.action.status;
   }
-  console.log("Took snapshot");
-
-  return ok;
 };
 
 export default {
   takeSnapshot,
   getSnapshotId,
   deleteSnapshot,
+  waitForSnapshot,
 };
