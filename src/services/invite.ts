@@ -7,10 +7,9 @@ export const addEmail = async (
 ) => {
   const servers = await getForEmail(client, email);
   if (!!servers && servers.includes(server)) return true;
-  const queryStr =
-    servers != null
-      ? `UPDATE invites SET servers=ARRAY_APPEND(servers, '${server}') WHERE email = '${email}'`
-      : `INSERT INTO invites (email, servers) VALUES ('${email}', '{${server}}')`;
+  const queryStr = servers.length
+    ? `UPDATE invites SET servers=ARRAY_APPEND(servers, '${server}') WHERE email = '${email}'`
+    : `INSERT INTO invites (email, servers) VALUES ('${email}', '{${server}}')`;
   const result = await client.query(queryStr);
   return result.rowCount == 1;
 };

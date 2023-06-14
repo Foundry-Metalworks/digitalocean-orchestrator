@@ -68,6 +68,11 @@ export const onServerInvite = databaseHandler(async (req, client) => {
   // Account invite if no account
   const count = await clerkClient.users.getCount({ emailAddress: [email] });
   if (!count) {
+    const invitations = await clerkClient.invitations.getInvitationList();
+    const invitation = invitations.find((i) => i.emailAddress == email);
+    if (invitation) {
+      await clerkClient.invitations.revokeInvitation(invitation.id);
+    }
     await clerkClient.invitations.createInvitation({
       emailAddress: email,
     });
@@ -76,7 +81,7 @@ export const onServerInvite = databaseHandler(async (req, client) => {
     const { id } = (
       await clerkClient.users.getUserList({ emailAddress: [email] })
     )[0];
-    const userServer = getUserServer(id);
+    const userServer = await getUserServer(id);
     if (userServer) {
       return {
         code: 400,
