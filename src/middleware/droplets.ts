@@ -31,7 +31,12 @@ export const withServerInfo: RequestHandler = async (
   next
 ) => {
   const reqWithAuth = req as RequireAuthProp<Request>;
-  const { token, server } = await getDoServerInfo(reqWithAuth.auth.userId);
+  const result = await getDoServerInfo(reqWithAuth.auth.userId);
+  if (!result)
+    return next(
+      Error(`User ${reqWithAuth.auth.userId} is not part of a server`)
+    );
+  const { token, server } = result;
   const axios = getDOAxiosInstance(token);
   const { id } = await getDropletId(axios, server);
   req.droplet = { token, server, id };

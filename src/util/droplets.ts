@@ -9,9 +9,10 @@ const dropletActionUrl = (id: string) => `droplets/${id}/actions`;
 
 export const getDoServerInfo = async (
   userId: string
-): Promise<{ token: string; server: string }> => {
+): Promise<{ token: string; server: string } | null> => {
   const client = await connect();
   const { server } = await getForUser(client, userId);
+  if (!server) return null;
   const token = (await getServer(client, server))?.digitalOcean as string;
   await client.end();
   return { token, server };
