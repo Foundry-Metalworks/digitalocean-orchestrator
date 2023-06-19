@@ -1,12 +1,9 @@
 import { Request, RequestHandler, Response } from "express";
-import {
-  getDoServerInfo,
-  getDropletId,
-  isActionPending,
-} from "../util/droplets";
-import { RequireAuthProp } from "@clerk/clerk-sdk-node";
-import { getDOAxiosInstance } from "../util/network";
+import { getDropletId, isActionPending } from "../util/droplets";
+import { getData, getDOAxiosInstance } from "../util/network";
 import { DORequest } from "../types";
+import { getServerToken } from "../services/servers";
+import { dbWrapper } from "../util/database";
 
 export const requireNoActions: RequestHandler = async (
   req: Request,
@@ -30,16 +27,13 @@ export const withServerInfo: RequestHandler = async (
   res: Response,
   next
 ) => {
-  const reqWithAuth = req as RequireAuthProp<Request>;
-  const result = await getDoServerInfo(reqWithAuth.auth.userId);
-  if (!result)
-    return next(
-      Error(`User ${reqWithAuth.auth.userId} is not part of a server`)
-    );
-  const { token, server } = result;
+  const { serverId } = getData(req, ["serverId"]);
+  const token = await dbWrapper<string>(
+    async (client) => await getServerToken(client, serverId)
+  );
   const axios = getDOAxiosInstance(token);
-  const { id } = await getDropletId(axios, server);
-  req.droplet = { token, server, id };
+  const { id } = await getDropletId(axios, serverId);
+  req.droplet = { token, server: serverId, id };
   return next();
 };
 

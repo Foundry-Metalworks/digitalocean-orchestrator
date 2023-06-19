@@ -4,7 +4,7 @@ import { Client } from "pg";
 
 const tokenCache = new cache.Cache();
 const serverCache = new cache.Cache();
-const TOKEN_EXPIRE_TIME = 30000;
+const TOKEN_EXPIRE_TIME = 60000;
 const TOKEN_LENGTH = 8;
 
 export const generateSingleUseToken = async (
@@ -47,6 +47,7 @@ export const getServerFromToken = async (client: Client, token: string) => {
   if (!storedServer) {
     const queryStr = `SELECT server FROM tokens WHERE token = '${token}'`;
     const result = await client.query(queryStr);
+    if (!result.rowCount) return null;
     const server = result.rows[0].server;
     await clearSingleUseTokens(client, server);
     return server;

@@ -1,15 +1,6 @@
-import { encrypt } from "../util/encrypt";
-import mapper from "./mapper/servers";
+import { decrypt, encrypt } from "../util/encrypt";
 import { Client } from "pg";
-
-export const doesServerExist = async (client: Client, name: string) => {
-  const queryStr = `
-  SELECT name FROM servers
-  WHERE name = '${name}'
-  `;
-  const result = await client.query(queryStr);
-  return result.rowCount > 0;
-};
+import { UserServerType } from "../types";
 
 export const addServer = async (
   client: Client,
@@ -18,55 +9,45 @@ export const addServer = async (
 ) => {
   const encryptedDoToken = encrypt(doToken);
   const addServerStr = `
-  INSERT INTO servers (name, dotoken, doiv, users)
-  VALUES('${name}', '${encryptedDoToken.value}', '${encryptedDoToken.iv}', '{}')
+  INSERT INTO servers (serverid, dotoken, doiv)
+  VALUES('${name}', '${encryptedDoToken.value}', '${encryptedDoToken.iv}')
   `;
   const result = await client.query(addServerStr);
   return result.rowCount == 1;
 };
 
-export const getServer = async (client: Client, name: string) => {
-  const serverExists = await doesServerExist(client, name);
-  if (!serverExists) {
-    return;
-  }
+export const getServerToken = async (client: Client, name: string) => {
   const queryStr = `
     SELECT dotoken, doiv
     FROM servers
-    WHERE name = '${name}'
+    WHERE serverid = '${name}'
   `;
   const result = await client.query(queryStr);
-  return mapper.fromGetResponse(result.rows);
+  const data = result.rows[0];
+  return decrypt(data.dotoken, data.doiv);
 };
 
-export const addUser = async (client: Client, name: string, user: string) => {
-  const serverExists = await doesServerExist(client, name);
-  if (!serverExists) {
-    return null;
-  }
-  const queryStr = `UPDATE servers SET users=ARRAY_APPEND(users, '${user}') WHERE name = '${name}'`;
-  const result = await client.query(queryStr);
-  return result.rowCount == 1;
-};
-
-export const removeUser = async (
+export const hasServer = async (
   client: Client,
-  name: string,
-  user: string
-) => {
-  const serverExists = await doesServerExist(client, name);
-  if (!serverExists) {
-    return null;
-  }
-  const queryStr = `UPDATE servers SET users=ARRAY_REMOVE(users, '${user}'}) WHERE name = '${name}'`;
+  name: string
+): Promise<boolean> => {
+  const queryStr = `SELECT EXISTS(SELECT 1 FROM servers WHERE serverId = '${name}')`;
   const result = await client.query(queryStr);
-  return result.rowCount == 1;
+  return result.rows[0].exists;
+};
+
+export const getForUser = async (
+  client: Client,
+  userId: string
+): Promise<UserServerType[]> => {
+  const queryStr = `SELECT serverId AS name, roleId AS role FROM users WHERE userId = '${userId}'`;
+  const result = await client.query(queryStr);
+  return result.rows || [];
 };
 
 export default {
   addServer,
-  getServer,
-  addUser,
-  removeUser,
-  doesServerExist,
+  getServerToken,
+  hasServer,
+  getForUser,
 };

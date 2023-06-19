@@ -16,3 +16,18 @@ export const connect = async () => {
   await client.connect();
   return client;
 };
+
+// eslint-disable-next-line @typescript-eslint/ban-types
+export const dbWrapper = async <T>(
+  func: (client: Client) => Promise<T>
+): Promise<T> => {
+  const client = await connect();
+  try {
+    const result = await func(client);
+    await client.end();
+    return result;
+  } catch (e) {
+    await client.end();
+    throw e;
+  }
+};

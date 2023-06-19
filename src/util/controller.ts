@@ -9,6 +9,7 @@ import { DOData, DORequest } from "../types";
 export interface RouteResult {
   code: number;
   result?: unknown;
+  error?: { message: string; stack?: never };
 }
 
 export const routeHandler = (
@@ -17,6 +18,9 @@ export const routeHandler = (
   return async (req, res) => {
     try {
       const result = await func(req as RequireAuthProp<Request>);
+      if (result.error) {
+        return res.status(result.code).send(result.error);
+      }
       return res.status(result.code).send(result.result);
     } catch (e) {
       const error = e as Error;

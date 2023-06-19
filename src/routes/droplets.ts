@@ -6,26 +6,40 @@ import {
   requireNoActions,
   withServerInfo,
 } from "../middleware/droplets";
+import { param } from "express-validator";
+import validate from "../middleware/validate";
+import { requiresServerToExist } from "../middleware/server";
 
 dotenv.config();
 
 const routes = express.Router();
-routes.use(withServerInfo);
+const innerRoutes = express.Router({ mergeParams: true });
+routes.use("/:serverId", innerRoutes);
+innerRoutes.use(
+  param("serverId").isAlpha(),
+  validate,
+  requiresServerToExist,
+  withServerInfo
+);
 
-routes.post("/start", requireNoActions, dropletsController.onStartRequest);
-routes.post(
+innerRoutes.post("/start", requireNoActions, dropletsController.onStartRequest);
+innerRoutes.post(
   "/stop",
   requireDroplet,
   requireNoActions,
   dropletsController.onStopRequest
 );
-routes.post(
+innerRoutes.post(
   "/save",
   requireDroplet,
   requireNoActions,
   dropletsController.onSaveRequest
 );
-routes.get("/ip", requireDroplet, dropletsController.onIPRequest);
-routes.get("/status", dropletsController.onStatusRequest);
+innerRoutes.get("/ip", requireDroplet, dropletsController.onIPRequest);
+innerRoutes.get(
+  "/status",
+  requiresServerToExist,
+  dropletsController.onStatusRequest
+);
 
 export default routes;

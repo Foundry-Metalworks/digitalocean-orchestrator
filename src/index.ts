@@ -4,9 +4,10 @@ import * as dotenv from "dotenv";
 import dropletRoutes from "./routes/droplets";
 import serverRoutes from "./routes/server";
 import userRoutes from "./routes/user";
+import inviteRoutes from "./routes/invites";
 import { ClerkExpressRequireAuth } from "@clerk/clerk-sdk-node";
 import * as process from "process";
-import { DOData } from "./types";
+import { DOData, MiddlewareError } from "./types";
 dotenv.config();
 
 declare module "express-serve-static-core" {
@@ -43,8 +44,9 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 app.use("/api/instance", dropletRoutes);
-app.use("/api/server", serverRoutes);
-app.use("/api/user", userRoutes);
+app.use("/api/servers", serverRoutes);
+app.use("/api/users", userRoutes);
+app.use("/api/invites", inviteRoutes);
 
 //error handler
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
@@ -53,7 +55,10 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     return next(err);
   }
   if (err.message == "Unauthenticated") res.status(401);
-  else res.status(500);
+  else if (err instanceof MiddlewareError) {
+    const mErr = err as MiddlewareError;
+    res.status(mErr.statusCode);
+  } else res.status(500);
   res.send({ error: { message: err.message, stack: err.stack } });
 });
 

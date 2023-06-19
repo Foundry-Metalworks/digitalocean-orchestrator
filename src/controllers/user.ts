@@ -1,27 +1,22 @@
 import { databaseHandler } from "../util/controller";
-import inviteService from "../services/invite";
-import { getUserEmail } from "../util/user";
 import serverService from "../services/servers";
-import userService from "../services/users";
+import { clerkClient } from "@clerk/clerk-sdk-node";
+import { getPrimaryEmail } from "../util/clerk";
+import { UserType } from "../types";
 
-export const onInvitesGet = databaseHandler(async (req, client) => {
-  const id = req.auth.userId;
-  const email = await getUserEmail(id);
-  const invites = await inviteService.getForEmail(client, email);
-  return { code: 200, result: { invites } };
-});
-
-export const onInviteAccept = databaseHandler(async (req, client) => {
-  const server = req.body.server;
-  const id = req.auth.userId;
-
-  const inviteUserResult = await serverService.addUser(client, server, id);
-  const addUserResult = await userService.addUser(client, id, server);
-  const isSuccess = inviteUserResult && addUserResult;
-  return { code: isSuccess ? 200 : 500, result: { server } };
+export const onUserGet = databaseHandler(async (req, client) => {
+  const userId = req.auth.userId;
+  const clerkUser = await clerkClient.users.getUser(userId);
+  const servers = await serverService.getForUser(client, userId);
+  const user: UserType = {
+    email: getPrimaryEmail(clerkUser),
+    name: clerkUser.username || "",
+    id: userId,
+    servers,
+  };
+  return { code: 200, result: user };
 });
 
 export default {
-  onInvitesGet,
-  onInviteAccept,
+  onUserGet,
 };

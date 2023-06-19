@@ -2,41 +2,61 @@ import express from "express";
 import { body, param } from "express-validator";
 import serverController from "../controllers/server";
 import validate from "../middleware/validate";
-import { requiresNewUser, requiresSetupUser } from "../middleware/user";
+import { requiresRole } from "../middleware/permission";
+import { ROLES } from "../types";
+import {
+  requiresServerToExist,
+  requiresServerToNotExist,
+} from "../middleware/server";
+import { requiresUserInServer } from "../middleware/user";
 
 const routes = express.Router();
 
-routes.get("/", serverController.onServerGet);
 routes.get(
-  "/:name/exists",
-  param("name").isAlpha(),
-  validate,
-  serverController.onCheckForServer
+  "/:serverId",
+  param("serverId").isAlpha(),
+  requiresServerToExist,
+  requiresUserInServer,
+  serverController.onServerGet
 );
-
-routes.get("/token", requiresSetupUser, serverController.onTokenGet);
-routes.get("/link", requiresSetupUser, serverController.onLinkGet);
-routes.post(
-  "/invite",
-  body("email").isEmail(),
+routes.get(
+  "/:serverId/check",
+  param("serverId").isAlpha(),
   validate,
-  requiresSetupUser,
-  serverController.onServerInvite
+  serverController.onServerCheck
 );
-
+// Server must exist
+routes.get(
+  "/:serverId/token",
+  param("serverId").isAlpha(),
+  validate,
+  requiresServerToExist,
+  requiresUserInServer,
+  requiresRole(ROLES.ADMIN),
+  serverController.onTokenGet
+);
+// Server must exist
+routes.get(
+  "/:serverId/link",
+  param("serverId").isAlpha(),
+  validate,
+  requiresServerToExist,
+  requiresUserInServer,
+  requiresRole(ROLES.ADMIN),
+  serverController.onLinkGet
+);
 routes.post(
   "/create",
-  body("name").isAlpha(),
-  body("doApiToken").isString(),
+  body("serverId").isAlpha(),
+  body("apiToken").isString(),
   validate,
-  requiresNewUser,
+  requiresServerToNotExist,
   serverController.onServerCreate
 );
 routes.post(
   "/join",
   body("inviteToken").isString().isAlphanumeric().isLength({ min: 8, max: 8 }),
   validate,
-  requiresNewUser,
   serverController.onServerJoin
 );
 

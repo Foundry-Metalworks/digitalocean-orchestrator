@@ -1,36 +1,56 @@
 import { Client } from "pg";
+import { InviteType } from "../types";
 
-export const addEmail = async (
+export const addInvite = async (
   client: Client,
-  server: string,
-  email: string
-) => {
-  const servers = await getForEmail(client, email);
-  if (!!servers && servers.includes(server)) return true;
-  const queryStr = servers.length
-    ? `UPDATE invites SET servers=ARRAY_APPEND(servers, '${server}') WHERE email = '${email}'`
-    : `INSERT INTO invites (email, servers) VALUES ('${email}', '{${server}}')`;
+  userEmail: string,
+  serverId: string
+): Promise<boolean> => {
+  const queryStr = `INSERT INTO invites (userEmail, serverId) VALUES ('${userEmail}', '${serverId}')`;
   const result = await client.query(queryStr);
   return result.rowCount == 1;
 };
 
-export const getForEmail = async (
+export const getInvite = async (
   client: Client,
-  email: string
-): Promise<string[]> => {
-  const queryStr = `SELECT servers FROM invites WHERE email = '${email}'`;
+  inviteId: string
+): Promise<InviteType | undefined> => {
+  const queryStr = `SELECT (id, userEmail, serverId) FROM invites WHERE id = '${inviteId}'`;
   const result = await client.query(queryStr);
-  return result.rowCount == 1 ? result.rows[0].servers : [];
+  return result.rowCount == 1 ? result.rows[0] : undefined;
 };
 
-export const removeEmail = async (client: Client, email: string) => {
-  const queryStr = `DELETE FROM invites WHERE email = '${email}'`;
+export const getForUser = async (
+  client: Client,
+  userEmail: string
+): Promise<InviteType[]> => {
+  const queryStr = `SELECT (id, userEmail, serverId) FROM invites WHERE userEmail = '${userEmail}'`;
+  const result = await client.query<InviteType>(queryStr);
+  return result.rows;
+};
+
+export const getForServer = async (
+  client: Client,
+  serverId: string
+): Promise<InviteType[]> => {
+  const queryStr = `SELECT (id, userEmail, serverId) FROM invites WHERE serverId = '${serverId}'`;
+  const result = await client.query<InviteType>(queryStr);
+  return result.rows;
+};
+
+export const removeInvite = async (
+  client: Client,
+  inviteId: number
+): Promise<boolean> => {
+  const queryStr = `DELETE FROM invites WHERE id = '${inviteId}'`;
   const result = await client.query(queryStr);
   return result.rowCount == 1;
 };
 
 export default {
-  addEmail,
-  getForEmail,
-  removeEmail,
+  addInvite,
+  getInvite,
+  removeInvite,
+  getForUser,
+  getForServer,
 };

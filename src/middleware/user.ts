@@ -1,52 +1,23 @@
-import { Request, Response, NextFunction, RequestHandler } from "express";
+import { Request, Response, RequestHandler } from "express";
+import { getData } from "../util/network";
+import { isUserInServer } from "../services/users";
 import { RequireAuthProp } from "@clerk/clerk-sdk-node";
-import { getUserInvites, getUserServer } from "../util/user";
+import { dbWrapper } from "../util/database";
+import { MiddlewareError } from "../types";
 
-export const requiresNewUser: RequestHandler = async (
+export const requiresUserInServer: RequestHandler = async (
   req: Request,
   res: Response,
-  next: NextFunction
+  next
 ) => {
-  const authenticatedReq = req as RequireAuthProp<Request>;
-  const id = authenticatedReq.auth.userId;
-  try {
-    const userServer = await getUserServer(id);
-    if (userServer) {
-      next(Error(`User ${id} already has server: ${userServer}`));
-    }
-  } catch (e) {
-    return next(e);
-  }
-  return next();
-};
-
-export const requiresSetupUser: RequestHandler = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const authenticatedReq = req as RequireAuthProp<Request>;
-  const id = authenticatedReq.auth.userId;
-  try {
-    const userServer = await getUserServer(id);
-    if (!userServer) {
-      return next(Error(`User ${id} is not setup`));
-    }
-  } catch (e) {
-    return next(e);
-  }
-  return next();
-};
-
-export const requiresUserInvited: RequestHandler = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  const server = req.body.server || req.params.server || req.query.server;
-  const authenticatedReq = req as RequireAuthProp<Request>;
-  const id = authenticatedReq.auth.userId;
-  const servers = await getUserInvites(id);
-  if (servers.includes(server)) return next();
-  return next(Error(`User ${id} is not invited to server: ${server}`));
+  const reqWithAuth = req as RequireAuthProp<Request>;
+  const userId = reqWithAuth.auth.userId;
+  const { serverId } = getData(req, ["serverId"]);
+  const isInServer = await dbWrapper<boolean>(
+    async (client) => await isUserInServer(client, userId, serverId)
+  );
+  if (isInServer) return next();
+  return next(
+    new MiddlewareError(400, `User ${userId} is not in server: ${serverId}`)
+  );
 };
