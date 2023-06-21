@@ -58,13 +58,13 @@ export const generateSingleUseToken = async (
     charset: voucherCodes.charset("alphanumeric"),
     count: 1,
   });
-  const queryStr = `INSERT INTO tokens (token, server) VALUES ('${token}', '${server}')`;
+  const queryStr = `UPDATE servers SET token = '${token}' WHERE serverId = '${server}'`;
   const result = await client.query(queryStr);
   if (result.rowCount == 1) return { token };
 };
 
 export const clearSingleUseTokens = async (client: Client, server: string) => {
-  const queryStr = `DELETE FROM tokens WHERE server = '${server}'`;
+  const queryStr = `UPDATE servers SET token = null WHERE serverId = '${server}'`;
   const result = await client.query(queryStr);
   return result.rowCount > 0;
 };
@@ -86,10 +86,10 @@ export const generateToken = (server: string) => {
 export const getFromToken = async (client: Client, token: string) => {
   const storedServer = tokenCache.get(token);
   if (!storedServer) {
-    const queryStr = `SELECT server FROM tokens WHERE token = '${token}'`;
+    const queryStr = `SELECT serverId FROM servers WHERE token = '${token}'`;
     const result = await client.query(queryStr);
     if (!result.rowCount) return null;
-    const server = result.rows[0].server;
+    const server = result.rows[0].serverid;
     await clearSingleUseTokens(client, server);
     return server;
   }
