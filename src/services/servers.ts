@@ -1,30 +1,19 @@
-import { decrypt, encrypt } from "../util/encrypt";
 import { Client } from "pg";
 import { UserServerType } from "../types";
+import cache from "memory-cache";
+import voucherCodes from "voucher-code-generator";
 
 export const addServer = async (
   client: Client,
   name: string,
-  doToken: string
+  ownerId: string
 ) => {
-  const encryptedDoToken = encrypt(doToken);
   const addServerStr = `
-  INSERT INTO servers (serverid, dotoken, doiv)
-  VALUES('${name}', '${encryptedDoToken.value}', '${encryptedDoToken.iv}')
+  INSERT INTO servers (serverid, ownerid)
+  VALUES('${name}', '${ownerId}')
   `;
   const result = await client.query(addServerStr);
   return result.rowCount == 1;
-};
-
-export const getServerToken = async (client: Client, name: string) => {
-  const queryStr = `
-    SELECT dotoken, doiv
-    FROM servers
-    WHERE serverid = '${name}'
-  `;
-  const result = await client.query(queryStr);
-  const data = result.rows[0];
-  return decrypt(data.dotoken, data.doiv);
 };
 
 export const hasServer = async (
@@ -45,9 +34,73 @@ export const getForUser = async (
   return result.rows || [];
 };
 
+export const getOwnerId = async (
+  client: Client,
+  serverId: string
+): Promise<string | null> => {
+  const queryStr = `SELECT ownerId FROM servers WHERE serverId = '${serverId}'`;
+  const result = await client.query(queryStr);
+  return result.rowCount ? result.rows[0].ownerid : null;
+};
+
+const tokenCache = new cache.Cache();
+const serverCache = new cache.Cache();
+const TOKEN_EXPIRE_TIME = 60000;
+const TOKEN_LENGTH = 8;
+
+export const generateSingleUseToken = async (
+  client: Client,
+  server: string
+) => {
+  await clearSingleUseTokens(client, server);
+  const [token] = voucherCodes.generate({
+    length: TOKEN_LENGTH,
+    charset: voucherCodes.charset("alphanumeric"),
+    count: 1,
+  });
+  const queryStr = `INSERT INTO tokens (token, server) VALUES ('${token}', '${server}')`;
+  const result = await client.query(queryStr);
+  if (result.rowCount == 1) return { token };
+};
+
+export const clearSingleUseTokens = async (client: Client, server: string) => {
+  const queryStr = `DELETE FROM tokens WHERE server = '${server}'`;
+  const result = await client.query(queryStr);
+  return result.rowCount > 0;
+};
+
+export const generateToken = (server: string) => {
+  if (serverCache.get(server)) {
+    return { token: serverCache.get(server) };
+  }
+  const [token] = voucherCodes.generate({
+    length: TOKEN_LENGTH,
+    charset: voucherCodes.charset("alphanumeric"),
+    count: 1,
+  });
+  tokenCache.put(token, server, TOKEN_EXPIRE_TIME);
+  serverCache.put(server, token, TOKEN_EXPIRE_TIME);
+  return { token };
+};
+
+export const getFromToken = async (client: Client, token: string) => {
+  const storedServer = tokenCache.get(token);
+  if (!storedServer) {
+    const queryStr = `SELECT server FROM tokens WHERE token = '${token}'`;
+    const result = await client.query(queryStr);
+    if (!result.rowCount) return null;
+    const server = result.rows[0].server;
+    await clearSingleUseTokens(client, server);
+    return server;
+  }
+  return storedServer as string | null;
+};
+
 export default {
   addServer,
-  getServerToken,
   hasServer,
   getForUser,
+  generateToken,
+  generateSingleUseToken,
+  getFromToken,
 };

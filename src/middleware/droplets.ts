@@ -1,9 +1,29 @@
 import { Request, RequestHandler, Response } from "express";
 import { getDropletId, isActionPending } from "../util/droplets";
 import { getData, getDOAxiosInstance } from "../util/network";
-import { DORequest } from "../types";
-import { getServerToken } from "../services/servers";
-import { dbWrapper } from "../util/database";
+import { DORequest, MiddlewareError } from "../types";
+import { getUpdatedAuthToken } from "../util/token";
+
+export const withServerInfo: RequestHandler = async (
+  req: Request,
+  res: Response,
+  next
+) => {
+  const { serverId } = getData(req, ["serverId"]);
+  const authData = await getUpdatedAuthToken(serverId);
+  if (!authData)
+    return next(
+      new MiddlewareError(
+        500,
+        `Failed to get auth data for server: ${serverId}`
+      )
+    );
+
+  const axios = getDOAxiosInstance(authData.doToken);
+  const { id } = await getDropletId(axios, serverId);
+  req.droplet = { token: authData.doToken, server: serverId, id };
+  return next();
+};
 
 export const requireNoActions: RequestHandler = async (
   req: Request,
@@ -19,21 +39,6 @@ export const requireNoActions: RequestHandler = async (
   if (isPending) {
     return next(Error(`Server: ${server} has pending droplet actions`));
   }
-  return next();
-};
-
-export const withServerInfo: RequestHandler = async (
-  req: Request,
-  res: Response,
-  next
-) => {
-  const { serverId } = getData(req, ["serverId"]);
-  const token = await dbWrapper<string>(
-    async (client) => await getServerToken(client, serverId)
-  );
-  const axios = getDOAxiosInstance(token);
-  const { id } = await getDropletId(axios, serverId);
-  req.droplet = { token, server: serverId, id };
   return next();
 };
 

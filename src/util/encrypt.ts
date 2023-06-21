@@ -2,7 +2,7 @@ import crypto, { BinaryLike } from "crypto";
 
 const { CRYPTO_ALGO, CRYPTO_KEY } = process.env;
 
-export const encrypt = (value: string) => {
+export const encrypt = (value: string): { value: string; iv: string } => {
   const iv = crypto.randomBytes(8);
   const cipher = crypto.createCipheriv(
     CRYPTO_ALGO as string,

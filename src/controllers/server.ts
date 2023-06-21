@@ -1,6 +1,5 @@
 import serverService from "../services/servers";
 import userService from "../services/users";
-import tokenService from "../services/token";
 import { databaseHandler, routeHandler } from "../util/controller";
 import { ROLES, ServerType } from "../types";
 import { getData } from "../util/network";
@@ -29,13 +28,9 @@ export const onServerCheck = databaseHandler(async (req, client) => {
 });
 
 export const onServerCreate = databaseHandler(async (req, client) => {
-  const { serverId, apiToken } = getData(req, ["serverId", "apiToken"]);
+  const { serverId } = getData(req, ["serverId"]);
   const id = req.auth.userId;
-  const addServerResult = await serverService.addServer(
-    client,
-    serverId,
-    apiToken
-  );
+  const addServerResult = await serverService.addServer(client, serverId, id);
   const addUserResult = await userService.addUser(
     client,
     id,
@@ -50,7 +45,7 @@ export const onServerCreate = databaseHandler(async (req, client) => {
 export const onServerJoin = databaseHandler(async (req, client) => {
   const id = req.auth.userId;
   const inviteToken = req.body.inviteToken;
-  const server = await tokenService.getServerFromToken(client, inviteToken);
+  const server = await serverService.getFromToken(client, inviteToken);
   if (!server) {
     return {
       code: 400,
@@ -66,13 +61,13 @@ export const onServerJoin = databaseHandler(async (req, client) => {
 
 export const onTokenGet = routeHandler(async (req) => {
   const { serverId } = getData(req, ["serverId"]);
-  const result = tokenService.generateToken(serverId);
+  const result = serverService.generateToken(serverId);
   return { code: 200, result };
 });
 
 export const onLinkGet = databaseHandler(async (req, client) => {
   const { serverId } = getData(req, ["serverId"]);
-  const result = await tokenService.generateSingleUseToken(client, serverId);
+  const result = await serverService.generateSingleUseToken(client, serverId);
   if (result) {
     return {
       code: 200,

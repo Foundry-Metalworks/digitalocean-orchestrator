@@ -48,7 +48,6 @@ routes.get(
 routes.post(
   "/create",
   body("serverId").isAlpha(),
-  body("apiToken").isString(),
   validate,
   requiresServerToNotExist,
   serverController.onServerCreate
