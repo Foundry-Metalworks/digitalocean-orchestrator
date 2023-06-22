@@ -7,7 +7,7 @@ import invitesController from "../controllers/invites";
 
 const routes = express.Router();
 
-routes.get("/");
+routes.get("/", invitesController.onInvitesGetForUser);
 routes.post(
   "/create",
   body("serverId").isAlpha(),
