@@ -8,6 +8,7 @@ import inviteRoutes from "./routes/invites";
 import { ClerkExpressRequireAuth } from "@clerk/clerk-sdk-node";
 import * as process from "process";
 import { DOData, MiddlewareError } from "./types";
+
 dotenv.config();
 
 declare module "express-serve-static-core" {
@@ -47,6 +48,12 @@ app.use("/api/instance", dropletRoutes);
 app.use("/api/servers", serverRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/invites", inviteRoutes);
+
+// TMP
+app.use((req: Request, res: Response, next) => {
+  console.log("Request: " + req.url);
+  next();
+});
 
 //error handler
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
