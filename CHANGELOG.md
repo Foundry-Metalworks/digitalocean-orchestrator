@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.3](https://github.com/Foundry-Metalworks/metalworks-orchestrator/compare/v0.4.2...v0.4.3) (2023-07-12)
+
+
+### Bug Fixes
+
+* fixup encryption on node 17+ ([a8711db](https://github.com/Foundry-Metalworks/metalworks-orchestrator/commit/a8711db3519a9b892b35c91c3b7a008adb87033f))
+* onServerCheck always returning false ([9b3ed75](https://github.com/Foundry-Metalworks/metalworks-orchestrator/commit/9b3ed755fd123e9656d998483b5ad14634498550))
+
 ### 0.4.2 (2023-06-23)
 
 
