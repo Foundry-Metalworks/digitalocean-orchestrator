@@ -49,12 +49,6 @@ app.use("/api/servers", serverRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/invites", inviteRoutes);
 
-// TMP
-app.use((req: Request, res: Response, next) => {
-  console.log("Request: " + req.url);
-  next();
-});
-
 //error handler
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.log("err:\n" + err.stack);
