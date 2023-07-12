@@ -22,8 +22,8 @@ export const onServerGet = databaseHandler(async (req, client) => {
 });
 
 export const onServerCheck = databaseHandler(async (req, client) => {
-  const server = req.params.name;
-  const exists = await serverService.hasServer(client, server);
+  const { serverId } = getData(req, ["serverId"]);
+  const exists = await serverService.hasServer(client, serverId);
   return { code: 200, result: { exists } };
 });
 
