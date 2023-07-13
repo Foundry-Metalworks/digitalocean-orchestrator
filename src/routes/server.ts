@@ -8,7 +8,10 @@ import {
   requiresServerToExist,
   requiresServerToNotExist,
 } from "../middleware/server";
-import { requiresUserInServer } from "../middleware/user";
+import {
+  requiresUserAuthorized,
+  requiresUserInServer,
+} from "../middleware/user";
 
 const routes = express.Router();
 
@@ -50,6 +53,7 @@ routes.post(
   body("serverId").isAlpha(),
   validate,
   requiresServerToNotExist,
+  requiresUserAuthorized,
   serverController.onServerCreate
 );
 routes.post(

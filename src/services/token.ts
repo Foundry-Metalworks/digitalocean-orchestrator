@@ -8,7 +8,10 @@ const getGenerateTokenUrl = (authCode: string) => {
   return `https://cloud.digitalocean.com/v1/oauth/token?client_id=${process.env.DO_CLIENT_ID}&client_secret=${process.env.DO_CLIENT_SECRET}&grant_type=authorization_code&code=${authCode}&redirect_uri=${process.env.DO_CALLBACK_URL}`;
 };
 const getRegenerateTokenUrl = (refreshToken: string) => {
-  return `ttps://cloud.digitalocean.com/v1/oauth/token?grant_type=refresh_token&refresh_token=${refreshToken}`;
+  return `https://cloud.digitalocean.com/v1/oauth/token?grant_type=refresh_token&refresh_token=${refreshToken}`;
+};
+const getRevokeTokenUrl = (token: string) => {
+  return `https://cloud.digitalocean.com/v1/oauth/revoke?token=${token}`;
 };
 
 export const generateAuthData = async (
@@ -95,6 +98,21 @@ export const getAuthData = async (
   return null;
 };
 
+export const removeAuthData = async (
+  client: Client,
+  userId: string
+): Promise<boolean> => {
+  const selectTokenQuery = `SELECT doToken, doIv FROM tokens WHERE userId = '${userId}'`;
+  const tokenResult = await client.query(selectTokenQuery);
+  const token = decrypt(tokenResult.rows[0].dotoken, tokenResult.rows[0].doiv);
+  const queryStr = `DELETE FROM tokens WHERE userId = '${userId}'`;
+  const dbResult = await client.query(queryStr);
+  const result = await axios.post(getRevokeTokenUrl(token), undefined, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return result.status == 200 && dbResult.rowCount == 1;
+};
+
 export default {
   generateAuthData,
   regenerateAuthData,
@@ -102,4 +120,5 @@ export default {
   addAuthData,
   updateAuthData,
   hasAuthData,
+  removeAuthData,
 };

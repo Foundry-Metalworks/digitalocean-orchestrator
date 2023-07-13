@@ -48,7 +48,17 @@ export const onUserAuthorize = databaseHandler(async (req, client) => {
   };
 });
 
+export const onUserUnauthorize = databaseHandler(async (req, client) => {
+  const userId = req.auth.userId;
+  const result = await tokenService.removeAuthData(client, userId);
+  return {
+    code: result ? 204 : 500,
+    error: result ? undefined : { message: "Failed to revoke auth token" },
+  };
+});
+
 export default {
   onUserGet,
   onUserAuthorize,
+  onUserUnauthorize,
 };
