@@ -14,6 +14,7 @@ export const onUserGet = databaseHandler(async (req, client) => {
   const user: UserType = {
     email: getPrimaryEmail(clerkUser),
     name: clerkUser.username || "",
+    imageUrl: clerkUser.profileImageUrl,
     id: userId,
     servers,
     authorized,

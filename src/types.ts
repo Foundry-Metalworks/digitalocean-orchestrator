@@ -45,6 +45,7 @@ export interface UserType {
   email: string;
   name: string;
   id: string;
+  imageUrl?: string;
   authorized: boolean;
   servers: UserServerType[];
 }
