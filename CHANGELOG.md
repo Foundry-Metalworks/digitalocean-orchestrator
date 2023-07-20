@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.4](https://github.com/Foundry-Metalworks/metalworks-orchestrator/compare/v0.4.3...v0.4.4) (2023-07-20)
+
+
+### Features
+
+* profile url in user get response ([56cc607](https://github.com/Foundry-Metalworks/metalworks-orchestrator/commit/56cc607642f813bcb089419549cbcd9256e2e3ce))
+* unauthorize digitalocean flow ([81b869e](https://github.com/Foundry-Metalworks/metalworks-orchestrator/commit/81b869e6f63705698af0c7e3addccdc4b5294449))
+
 ### [0.4.3](https://github.com/Foundry-Metalworks/metalworks-orchestrator/compare/v0.4.2...v0.4.3) (2023-07-12)
 
 
