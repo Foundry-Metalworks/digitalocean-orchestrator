@@ -1,0 +1,191 @@
+openapi: "3.1.0"
+info:
+  title: Invites API
+  version: "1.0"
+paths:
+  /invites:
+    get:
+      summary: Get invites for user
+      description: Retrieves all invites for the current user
+      tags:
+        - invites
+      responses:
+        '200':
+          description: Retrieved invites for user.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/InviteSchema'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          description: Failed to retrieve invites for user.
+          $ref: '#/components/responses/GeneralError'
+  /invites/{serverId}:
+    get:
+      summary: Get all invites to the server
+      description: |
+        Retrieves all invites to the server with serverId. 
+        
+        Requires the server to exist.<br />
+        Requires user to be in the server.<br />
+        Requires user role OWNER.
+      tags:
+        - invites
+      parameters:
+        - $ref: '#/components/parameters/ServerId'
+      responses:
+        '200':
+          description: Retrieved invites for server.
+          content:
+            application/json:
+              type: array
+              items:
+                $ref: '#/components/schemas/InviteSchema'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '400':
+          description: |
+            Bad request data. 
+            
+            Occurs with invalid server id.<br/>
+            Occurs when the server does not exist.<br/>
+            Occurs when the user is not in the server.<br/>
+            Occurs when user does not have OWNER role.
+          $ref: '#/components/responses/GeneralError'
+        '500':
+          description: Failed to retrieve invites for server
+          $ref: '#/components/responses/GeneralError'
+  /invites/create:
+    post:
+      summary: Create invite for server
+      description: |
+        Invites user to server. 
+        
+        Requires server to exist.<br/>
+        Requires user to be in the server.<br />
+        Requires user role OWNER.
+      tags:
+        - invites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                serverId:
+                  $ref: "#/components/schemas/ServerId"
+                email:
+                  type: string
+                  format: email
+                  example: 'tenzin@website.com'
+      responses:
+        '204':
+          description: Successfully invited user to server.
+          $ref: '#/components/responses/NoContent'
+        '400':
+          description: |
+            Bad request data. 
+            
+            Occurs with invalid server id.<br/>
+            Occurs with invalid email.<br/>
+            Occurs when the server does not exist.<br/>
+            Occurs when the user is not in the server.<br/>
+            Occurs when user does not have OWNER role.
+          $ref: '#/components/responses/GeneralError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          description: Failed to invite user to server
+          $ref: '#/components/responses/GeneralError'
+  /invites/accept:
+    post:
+      summary: Accept invite to server
+      description: |
+        Accepts invite by inviteId to its associated server.
+        
+        Requires invite to exist.
+      tags:
+        - invites
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                inviteId:
+                  type: number
+                  description: Invite ID.
+                  example: 12
+      responses:
+        '204':
+          description: Successfully accepted invite to server.
+          $ref: '#/components/responses/NoContent'
+        '400':
+          description: |
+            Bad request data. 
+            
+            Occurs with invalid invite id.<br/>
+            Occurs when invite does not exist.
+          $ref: '#/components/responses/GeneralError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          description: Failed to invite user to server
+          $ref: '#/components/responses/GeneralError'
+  /invites/{serverId}/{inviteId}:
+    delete:
+      summary: Deletes invite to server
+      description: |
+        Deletes invite inviteId for server serverId.
+        
+        Requires server to exist.<br/>
+        Requires invite to exist.<br/>
+        Requires user to be in the server.<br />
+        Requires user role OWNER.
+      tags:
+        - invites
+      parameters:
+        - $ref: '#/components/parameters/ServerId'
+        - in: path
+          name: inviteId
+          type: number
+          required: true
+          description: Invite ID for the server
+      responses:
+        '204':
+          description: Successfully removed invite.
+          $ref: '#/components/responses/NoContent'
+        '400':
+          description: |
+            Bad request data. 
+            
+            Occurs with invalid server id.<br/>
+            Occurs with invalid invite id.<br/>
+            Occurs when the server does not exist.<br/>
+            Occurs when the invite does not exist.<br/>
+            Occurs when the user is not in the server.<br/>
+            Occurs when user does not have OWNER role.
+          $ref: '#/components/responses/GeneralError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          description: Failed to remove invite.
+          $ref: '#/components/responses/GeneralError'
+components:
+  schemas:
+    InviteSchema:
+      type: object
+      properties:
+        id:
+          type: number
+        userEmail:
+          type: string
+          format: email
+          example: 'tenzin@website.com'
+        serverId:
+          type: string
+          pattern: '^[a-zA-Z]*$'
+          example: 'foundry'

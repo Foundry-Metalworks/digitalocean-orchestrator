@@ -50,9 +50,19 @@ const onInviteAccept = databaseHandler(async (req, client) => {
 });
 
 const onInviteRemove = databaseHandler(async (req, client) => {
-  const inviteId = req.body.id;
+  const { inviteId, serverId } = getData(req, ["inviteId", "serverId"]);
   const invite = await invitesService.getInvite(client, inviteId);
-  if (invite) await invitesService.removeInvite(client, invite.id);
+  if (invite) {
+    const result = await invitesService.removeInvite(client, invite.id);
+    return {
+      code: result ? 204 : 500,
+      error: result
+        ? undefined
+        : {
+            message: `Failed to remove invite ${inviteId} for server: ${serverId}`,
+          },
+    };
+  }
   return {
     code: 400,
     error: { message: `No such invite by that id: ${inviteId}` },

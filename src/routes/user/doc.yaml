@@ -1,0 +1,116 @@
+openapi: '3.1.0'
+info:
+  title: User API
+  version: '1.0'
+paths:
+  /users/me:
+    get:
+      summary: Gets current user info
+      tags:
+        - user
+      responses:
+        '200':
+          description: Successfully got user info
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSchema'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          description: Failed to get user info
+          $ref: '#/components/responses/GeneralError'
+  /users/authorize:
+    post:
+      summary: Authorizes current user on DigitalOcean
+      tags:
+        - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                  description: DigitalOcean OAuth Code
+      responses:
+        '204':
+          description: Successfully authorized user on DigitalOcean
+          $ref: '#/components/responses/NoContent'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '400':
+          description: Bad request. Might occur if DigitalOcean OAuth code is invalid
+          $ref: '#/components/responses/GeneralError'
+        '500':
+          description: Failed to authorize user
+          $ref: '#/components/responses/GeneralError'
+    delete:
+      summary: Revokes DigitalOcean authorization.
+      description: |
+        Revokes the DigitalOcean auth token.
+        
+        Requires user to be authorized with DigitalOcean.
+      tags:
+        - user
+      responses:
+        '204':
+          description: Revoked user DigitalOcean authorization
+          $ref: '#/components/responses/NoContent'
+        '400':
+          description: Bad Request. User not authorized with DigitalOcean.
+          $ref: '#/components/responses/GeneralError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          description: Failed to revoke user authorization
+          $ref: '#/components/responses/GeneralError'
+components:
+  schemas:
+    UserRoleSchema:
+      type: integer
+      oneOf:
+        - title: OWNER
+          const: 4
+          description: Owner of server. Permissions of ADMIN + can manage invites
+        - title: ADMIN
+          const: 3
+          description: Admin of server. Permissions of TRUSTED + can stop server
+        - title: TRUSTED
+          const: 2
+          description: Trusted user of server. Permissions of USER + can save server
+        - title: USER
+          const: 1
+          description: User of server. Permissions of LOSER + can start server
+        - title: LOSER
+          const: 0
+          description: Lowest permission level. Can only join server
+    UserServerSchema:
+      type: object
+      properties:
+        name:
+          type: string
+          example: 'foundry'
+        role:
+          $ref: '#/components/schemas/UserRoleSchema'
+    UserSchema:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        id:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+        authorized:
+          type: boolean
+        servers:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserServerSchema'
+

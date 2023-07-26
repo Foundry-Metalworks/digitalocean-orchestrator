@@ -1,0 +1,254 @@
+openapi: "3.1.0"
+info:
+  title: Servers API
+  version: "1.0"
+paths:
+  /servers/{serverId}:
+    get:
+      summary: Gets server information
+      description: |
+        Retrieves server information by serverId. 
+        
+        Requires server to exist.<br />
+        Requires user to be in server.
+      tags:
+        - server
+      parameters:
+        - $ref: '#/components/parameters/ServerId'
+      responses:
+        '200':
+          description: Successfully retrieved server information
+          content:
+            application/json:
+              $ref: '#/components/schemas/ServerSchema'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '400':
+          description: |
+            Bad request data. 
+            
+            Occurs with invalid server id.<br/>
+            Occurs when server does not exist.<br />
+            Occurs when the user is not in the server.
+          $ref: '#/components/responses/GeneralError'
+        '500':
+          description: Failed to get server information
+          $ref: '#/components/responses/GeneralError'
+  /servers/{serverId}/check:
+    get:
+      summary: Checks if server exists
+      tags:
+        - server
+      parameters:
+        - $ref: '#/components/parameters/ServerId'
+      responses:
+        '200':
+          summary: Successfully checked if server exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  exists:
+                    type: boolean
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '400':
+          description: |
+            Bad request data.
+            
+            Occurs with invalid server id.
+          $ref: '#/components/responses/GeneralError'
+        '500':
+          description: Failed to check if server exists
+          $ref: '#/components/responses/GeneralError'
+  /servers/{serverId}/token:
+    get:
+      summary: Gets share token for server
+      description: |
+        Retrieves share token for the server.<br />
+        Invalidates previous token.<br />
+        Expires in 1 minute. 
+        
+        Requires the server to exist.<br />
+        Requires the user to be in the server.<br />
+        Requires user role OWNER.
+      tags:
+        - server
+      parameters:
+        - $ref: '#/components/parameters/ServerId'
+      responses:
+        '200':
+          description: Successfully retrieved server share token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: 'A123b4Cd'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '400':
+          description: |
+            Bad request data.
+            
+            Occurs with invalid server id.<br/>
+            Occurs when the server does not exist.<br/>
+            Occurs when the user is not in the server.<br/>
+            Occurs when user does not have TRUSTED role.
+          $ref: '#/components/responses/GeneralError'
+        '500':
+          description: Failed to retrieve server share token
+          $ref: '#/components/responses/GeneralError'
+  /servers/{serverId}/link:
+    get:
+      summary: Gets share link for server
+      description: |
+        Retrieves share link for the server.<br/>
+        Invalidates previous share link. <br/>
+        Does not expire. 
+        
+        Requires the server to exist.<br/>
+        Requires the user to be in the server.<br />
+        Requires user role OWNER.
+      tags:
+        - server
+      parameters:
+        - $ref: '#/components/parameters/ServerId'
+      responses:
+        '200':
+          summary: Successfully retrieved share link
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  link:
+                    type: string
+                    example: 'https://dnd.tenzin.live/join/a15B4rl9'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '400':
+          description: |
+            Bad request data.
+            
+            Occurs with invalid server id.<br/>
+            Occurs when the server does not exist.<br/>
+            Occurs when the user is not in the server.<br/>
+            Occurs when user does not have OWNER role.
+          $ref: '#/components/responses/GeneralError'
+        '500':
+          description: Failed to retrieve server share link
+          $ref: '#/components/responses/GeneralError'
+  /servers/{serverId}/create:
+    post:
+      summary: Create a new server
+      description: |
+        Creates server with that ID. 
+        
+        Requires the server to not exist.<br/>
+        Requires user to be authorized with DigitalOcean.
+      tags:
+        - server
+      parameters:
+        - $ref: '#/components/parameters/ServerId'
+      responses:
+        '204':
+          description: Successfully created new server
+          $ref: '#/components/responses/NoContent'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '400':
+          description: |
+            Bad request data. 
+            
+            Occurs with invalid server id.<br/>
+            Occurs when the server exists.<br/>
+            Occurs when the user is not authorized with DigitalOcean.
+          $ref: '#/components/responses/GeneralError'
+        '500':
+          description: Failed to create server.
+          $ref: '#/components/responses/GeneralError'
+  /servers/{serverId}/join:
+    post:
+      summary: Join server
+      description: |
+        Join server based on ID.
+      tags:
+        - server
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                inviteToken:
+                  type: string
+                  description: "Server invite token. Must be alphanumeric"
+                  required: true
+                  pattern: "^[a-zA-Z0-9]*$"
+      responses:
+        '200':
+          description: Successfully joined server
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  server:
+                    type: string
+                    description: "Server ID"
+                    pattern: "^[a-zA-Z]*$"
+                    example: "foundry"
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '400':
+          description: |
+            Bad request data. 
+            
+            Occurs with invalid server id.<br/>
+            Occurs with invalid invite token.
+          $ref: '#/components/responses/GeneralError'
+        '500':
+          description: Failed to join server.
+          $ref: '#/components/responses/GeneralError'
+components:
+  schemas:
+    ServerUserSchema:
+      type: object
+      description: Server user
+      properties:
+        name:
+          type: string
+          description: User's ID
+        role:
+          $ref: '#/components/schemas/UserRoleSchema'
+    PermissionsSchema:
+      type: object
+      description: Server user permissions
+      properties:
+        canstart:
+          type: boolean
+        canstop:
+          type: boolean
+        cansave:
+          type: boolean
+        caninvite:
+          type: boolean
+    ServerSchema:
+      type: object
+      description: Server information
+      properties:
+        name:
+          type: string
+          description: Server name
+        permissions:
+          $ref: '#/components/schemas/PermissionsSchema'
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/ServerUserSchema'
+
+

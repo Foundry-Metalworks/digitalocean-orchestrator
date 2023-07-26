@@ -1,23 +1,24 @@
 import express from "express";
 import { body, param } from "express-validator";
-import serverController from "../controllers/server";
-import validate from "../middleware/validate";
-import { requiresRole } from "../middleware/permission";
-import { ROLES } from "../types";
+import serverController from "@/controllers/server";
+import validate from "@/middleware/validate";
+import { requiresRole } from "@/middleware/permission";
+import { ROLES } from "@/types";
 import {
   requiresServerToExist,
   requiresServerToNotExist,
-} from "../middleware/server";
+} from "@/middleware/server";
 import {
   requiresUserAuthorized,
   requiresUserInServer,
-} from "../middleware/user";
+} from "@/middleware/user";
 
 const routes = express.Router();
 
 routes.get(
   "/:serverId",
   param("serverId").isAlpha(),
+  validate,
   requiresServerToExist,
   requiresUserInServer,
   serverController.onServerGet
@@ -35,7 +36,7 @@ routes.get(
   validate,
   requiresServerToExist,
   requiresUserInServer,
-  requiresRole(ROLES.ADMIN),
+  requiresRole(ROLES.OWNER),
   serverController.onTokenGet
 );
 // Server must exist
@@ -45,7 +46,7 @@ routes.get(
   validate,
   requiresServerToExist,
   requiresUserInServer,
-  requiresRole(ROLES.ADMIN),
+  requiresRole(ROLES.OWNER),
   serverController.onLinkGet
 );
 routes.post(

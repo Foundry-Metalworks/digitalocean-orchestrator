@@ -1,0 +1,217 @@
+openapi: "3.1.0"
+info:
+  title: Instance API
+  version: "1.0"
+paths:
+  /instance/{serverId}/start:
+    post:
+      summary: Start server instance
+      description: |
+        Starts a droplet for the server serverId.
+        
+        Requires the server to exist.<br/>
+        Requires the user to be in the server.<br />
+        Requires there to be no droplet actions for that server.<br />
+        Requires user role USER.
+      tags:
+        - instance
+      parameters:
+        - $ref: '#/components/parameters/ServerId'
+      responses:
+        '200':
+          description: Successfully started droplet
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    description: The droplet ID.
+        '400':
+          description: |
+            Bad request data.
+            
+            Occurs with invalid server id.<br/>
+            Occurs when the server does not exist.<br/>
+            Occurs when the user is not in the server.<br/>
+            Occurs when there are droplet actions for the server.<br/>
+            Occurs when user does not have USER role.
+          $ref: '#/components/responses/GeneralError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          description: Failed to start droplet
+          $ref: '#/components/responses/GeneralError'
+  /instance/{serverId}/stop:
+    post:
+      summary: Stops the droplet for the server
+      description: |
+        Stops droplet for server serverId.<br />
+        Removes domain mapping for server serverId.<br />
+        Starts snapshot action for the droplet. Deletes old snapshot and droplet when complete.<br />
+      
+        
+        Requires the server to exist.<br/>
+        Requires the user to be in the server.<br />
+        Requires there to be a droplet for the server.<br />
+        Requires there to be no droplet actions for that server.<br />
+        Requires user role ADMIN.
+      tags:
+        - instance
+      parameters:
+        - $ref: '#/components/parameters/ServerId'
+      responses:
+        '200':
+          description: Successfully stopping droplet.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  actionId:
+                    type: string
+                    description: The snapshot droplet action ID.
+        '400':
+          description: |
+            Bad request data.
+            
+            Occurs with invalid server id.<br/>
+            Occurs when the server does not exist.<br/>
+            Occurs when the user is not in the server.<br/>
+            Occurs when there is no droplet for the server.<br />
+            Occurs when there are droplet actions for the server.<br/>
+            Occurs when user does not have ADMIN role.
+          $ref: '#/components/responses/GeneralError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          description: Failed to stop droplet.
+          $ref: '#/components/responses/GeneralError'
+  /instance/${serverId}/save:
+    post:
+      summary: Save server instance
+      description: |
+        Starts taking snapshot for server droplet. Deletes old snapshot on completion.
+        
+        Requires server to exist.<br/>
+        Requires user to be in the server.<br />
+        Requires there to be a droplet for the server.<br />
+        Requires there to be no droplet actions for the server.<br />
+        Requires user role TRUSTED.
+      tags:
+        - instance
+      parameters:
+        - $ref: '#/components/parameters/ServerId'
+      responses:
+        '200':
+          description: Successfully saving droplet.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  actionId:
+                    type: string
+                    description: The snapshot droplet action ID.
+        '400':
+          description: |
+            Bad request data.
+            
+            Occurs with invalid server id.<br/>
+            Occurs when server does not exist.<br/>
+            Occurs when user is not in the server.<br/>
+            Occurs when there is no droplet for the server.<br />
+            Occurs when there are droplet actions for the server.<br/>
+            Occurs when user does not have TRUSTED role.
+          $ref: '#/components/responses/GeneralError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          description: Failed to save droplet.
+          $ref: '#/components/responses/GeneralError'
+  /instance/${serverId}/ip:
+    get:
+      summary: Gets URL for server droplet
+      description: |
+        Gets the URL for the server's droplet.<br />
+        Gets friendly HTTPS URL over if possible, falls back to the raw HTTP url.
+        
+        Requires the server to exist.<br/>
+        Requires the user to be in the server.<br />
+        Requires there to be a droplet for the server.<br />
+      tags:
+        - instance
+      parameters:
+        - $ref: '#/components/parameters/ServerId'
+      responses:
+        '200':
+          description: Successfully retrieved URL.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ip:
+                    type: string
+                    description: URL for the server.
+                    example: 'https://foundry.dnd.tenzin.live'
+        '400':
+          description: |
+            Bad request data.
+
+            Occurs with invalid server id.<br/>
+            Occurs when the server does not exist.<br/>
+            Occurs when the user is not in the server.<br/>
+            Occurs when there is no droplet for the server.
+          $ref: '#/components/responses/GeneralError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          description: Failed to save droplet.
+          $ref: '#/components/responses/GeneralError'
+  /instance/${serverId}/status:
+    get:
+      summary: Gets status for server droplet
+      description: |
+        Gets the status for the server's droplet.
+        
+        Requires the server to exist.<br/>
+        Requires the user to be in the server.<br />
+      tags:
+        - instance
+      parameters:
+        - $ref: '#/components/parameters/ServerId'
+      responses:
+        '200':
+          description: Successfully retrieved droplet status.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - pending
+                      - deleted
+                      - fresh
+                      - active
+                      - pending
+                      - new
+                      - off
+                    description: Status of the server droplet.
+                    example: 'fresh'
+        '400':
+          description: |
+            Bad request data.
+
+            Occurs with invalid server id.<br/>
+            Occurs when the server does not exist.<br/>
+            Occurs when the user is not in the server.<br/>
+          $ref: '#/components/responses/GeneralError'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '500':
+          description: Failed to save droplet.
+          $ref: '#/components/responses/GeneralError'

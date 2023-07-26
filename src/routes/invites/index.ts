@@ -1,9 +1,11 @@
 import express from "express";
 import { body, param } from "express-validator";
-import validate from "../middleware/validate";
-import { requiresRole } from "../middleware/permission";
-import { ROLES } from "../types";
-import invitesController from "../controllers/invites";
+import validate from "@/middleware/validate";
+import { requiresRole } from "@/middleware/permission";
+import { ROLES } from "@/types";
+import invitesController from "@/controllers/invites";
+import { requiresServerToExist } from "@/middleware/server";
+import { requiresUserInServer } from "@/middleware/user";
 
 const routes = express.Router();
 
@@ -13,7 +15,9 @@ routes.post(
   body("serverId").isAlpha(),
   body("email").isEmail(),
   validate,
-  requiresRole(ROLES.ADMIN),
+  requiresServerToExist,
+  requiresUserInServer,
+  requiresRole(ROLES.OWNER),
   invitesController.onInviteCreate
 );
 routes.post(
@@ -26,7 +30,9 @@ routes.get(
   "/:serverId",
   param("serverId").isAlpha(),
   validate,
-  requiresRole(ROLES.ADMIN),
+  requiresServerToExist,
+  requiresUserInServer,
+  requiresRole(ROLES.OWNER),
   invitesController.onInvitesGetForServer
 );
 routes.delete(
@@ -34,7 +40,9 @@ routes.delete(
   param("serverId").isAlpha(),
   param("inviteId").isNumeric(),
   validate,
-  requiresRole(ROLES.ADMIN),
+  requiresServerToExist,
+  requiresUserInServer,
+  requiresRole(ROLES.OWNER),
   invitesController.onInviteRemove
 );
 

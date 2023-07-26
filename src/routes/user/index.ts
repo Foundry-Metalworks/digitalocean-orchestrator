@@ -1,8 +1,8 @@
 import express from "express";
-import userController from "../controllers/user";
+import userController from "@/controllers/user";
 import { body } from "express-validator";
-import validate from "../middleware/validate";
-import { requiresUserAuthorized } from "../middleware/user";
+import validate from "@/middleware/validate";
+import { requiresUserAuthorized } from "@/middleware/user";
 
 const routes = express.Router();
 

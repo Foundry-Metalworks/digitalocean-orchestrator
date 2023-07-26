@@ -8,6 +8,9 @@ import inviteRoutes from "./routes/invites";
 import { ClerkExpressRequireAuth } from "@clerk/clerk-sdk-node";
 import * as process from "process";
 import { DOData, MiddlewareError } from "./types";
+import swaggerUI from "swagger-ui-express";
+import swaggerJSDoc from "swagger-jsdoc";
+import swaggerOptions from "./swagger";
 
 dotenv.config();
 
@@ -20,6 +23,10 @@ declare module "express-serve-static-core" {
 const app = express();
 const PORT = process.env.PORT || 3030;
 const isDevelopment = process.env.NODE_ENV == "development";
+
+// swagger
+const swaggerSpec = swaggerJSDoc(swaggerOptions);
+app.use("/docs", swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 
 // cors
 app.use(
