@@ -24,10 +24,6 @@ const app = express();
 const PORT = process.env.PORT || 3030;
 const isDevelopment = process.env.NODE_ENV == "development";
 
-// swagger
-const swaggerSpec = swaggerJSDoc(swaggerOptions);
-app.use("/docs", swaggerUI.serve, swaggerUI.setup(swaggerSpec));
-
 // cors
 app.use(
   cors({
@@ -36,9 +32,17 @@ app.use(
       : `https://${process.env.DOMAIN_NAME}`,
   })
 );
+// data
+app.use(express.urlencoded({ extended: false }));
+app.use(express.json());
+
+// swagger
+const swaggerSpec = swaggerJSDoc(swaggerOptions);
+app.use("/docs", swaggerUI.serve, swaggerUI.setup(swaggerSpec));
 
 // auth
 app.use(
+  "/api",
   ClerkExpressRequireAuth({
     onError: (err) => {
       err.status = 401;
@@ -46,10 +50,6 @@ app.use(
     },
   })
 );
-
-// data
-app.use(express.urlencoded({ extended: false }));
-app.use(express.json());
 
 app.use("/api/instance", dropletRoutes);
 app.use("/api/servers", serverRoutes);
