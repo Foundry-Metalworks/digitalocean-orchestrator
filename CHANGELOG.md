@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.4.6](https://github.com/Foundry-Metalworks/metalworks-orchestrator/compare/v0.4.5...v0.4.6) (2023-07-31)
+
+
+### Bug Fixes
+
+* no auth for docs ([9af26d5](https://github.com/Foundry-Metalworks/metalworks-orchestrator/commit/9af26d5a7abc7d0770f62f1f223b6ad7fa7a6ded))
+
 ### [0.4.5](https://github.com/Foundry-Metalworks/metalworks-orchestrator/compare/v0.4.4...v0.4.5) (2023-07-31)
 
 ### [0.4.4](https://github.com/Foundry-Metalworks/metalworks-orchestrator/compare/v0.4.3...v0.4.4) (2023-07-20)
