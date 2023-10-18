@@ -1,8 +1,8 @@
 import serverService from "../services/servers";
 import userService from "../services/users";
-import { databaseHandler, routeHandler } from "../util/controller";
-import { ROLES, ServerType } from "../types";
-import { getData } from "../util/network";
+import { databaseHandler, routeHandler } from "@/util/controller";
+import { ROLES, ServerType } from "@/types";
+import { getData } from "@/util/network";
 import * as process from "process";
 
 export const onServerGet = databaseHandler(async (req, client) => {

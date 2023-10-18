@@ -17,7 +17,6 @@ export const connect = async () => {
   return client;
 };
 
-// eslint-disable-next-line @typescript-eslint/ban-types
 export const dbWrapper = async <T>(
   func: (client: Client) => Promise<T>
 ): Promise<T> => {

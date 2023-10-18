@@ -32,7 +32,7 @@ export const regenerateAuthData = async (
   return {
     doToken,
     refreshToken: refresh_token,
-    expiry: Date.now() + TOKEN_EXPIRY,
+    expiryDate: Date.now() + TOKEN_EXPIRY,
   };
 };
 
@@ -70,7 +70,7 @@ export const updateAuthData = async (
 export type AuthDataType = {
   doToken: string;
   refreshToken: string;
-  expiry: number;
+  expiryDate: number;
 };
 
 export const hasAuthData = async (
@@ -92,8 +92,8 @@ export const getAuthData = async (
     const data = result.rows[0];
     const doToken = decrypt(data.dotoken, data.doiv);
     const refreshToken = decrypt(data.refreshtoken, data.refreshiv);
-    const expiry = data.expiryDate;
-    return { doToken, refreshToken, expiry };
+    const expiryDate = Number(data.expirydate);
+    return { doToken, refreshToken, expiryDate };
   }
   return null;
 };

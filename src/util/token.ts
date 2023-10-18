@@ -3,9 +3,9 @@ import {
   getAuthData,
   regenerateAuthData,
   updateAuthData,
-} from "../services/token";
+} from "@/services/token";
 import { dbWrapper } from "./database";
-import { getOwnerId } from "../services/servers";
+import { getOwnerId } from "@/services/servers";
 
 export const getUpdatedAuthToken = async (
   serverId: string
@@ -20,7 +20,7 @@ export const getUpdatedAuthToken = async (
   );
   if (!authData) return null;
 
-  if (authData.expiry >= Date.now()) {
+  if (authData.expiryDate < Date.now()) {
     const newAuthData = await regenerateAuthData(authData.refreshToken);
     await dbWrapper(
       async (client) =>
