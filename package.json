@@ -1,6 +1,6 @@
 {
   "name": "metalworks-orchestrator",
-  "version": "0.4.6",
+  "version": "0.4.7",
   "engines": {
     "node": "16.x"
   },
